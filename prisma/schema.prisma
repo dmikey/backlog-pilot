@@ -41,11 +41,12 @@ model HouseholdMembership {
 }
 
 model Platform {
-  id            String         @id
-  name          String
-  shortName     String
-  releaseEra    String
-  libraryEntries LibraryEntry[]
+  id              String           @id
+  name            String
+  shortName       String
+  releaseEra      String
+  libraryEntries  LibraryEntry[]
+  recommendations Recommendation[]
 }
 
 model Game {
@@ -98,6 +99,7 @@ model Recommendation {
   household   Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
   user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   game        Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platform    Platform               @relation(fields: [platformId], references: [id], onDelete: Cascade)
   reasons     RecommendationReason[]
   createdAt   DateTime               @default(now())
 }

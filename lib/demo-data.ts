@@ -232,14 +232,39 @@ export const activeRotation = demoLibraryEntries.filter((entry) =>
   ["active", "next_up", "backlog"].includes(entry.playStatus),
 );
 
+function findByIdOrThrow<T extends { id?: string; gameId?: string }>(
+  collection: T[],
+  matcher: (item: T) => boolean,
+  entityName: string,
+  lookupValue: string,
+) {
+  const match = collection.find(matcher);
+
+  if (!match) {
+    throw new Error(`Missing ${entityName} for "${lookupValue}" in demo data.`);
+  }
+
+  return match;
+}
+
 export function getGameById(gameId: string) {
-  return demoGames.find((game) => game.id === gameId)!;
+  return findByIdOrThrow(demoGames, (game) => game.id === gameId, "game", gameId);
 }
 
 export function getPlatformById(platformId: string) {
-  return demoPlatforms.find((platform) => platform.id === platformId)!;
+  return findByIdOrThrow(
+    demoPlatforms,
+    (platform) => platform.id === platformId,
+    "platform",
+    platformId,
+  );
 }
 
 export function getMetadataByGameId(gameId: string) {
-  return demoGameMetadata.find((metadata) => metadata.gameId === gameId)!;
+  return findByIdOrThrow(
+    demoGameMetadata,
+    (metadata) => metadata.gameId === gameId,
+    "game metadata",
+    gameId,
+  );
 }
