@@ -161,6 +161,36 @@ Current weighted factors:
 
 Factor weights are configuration-driven via `RecommendationScoringEngine` constructor options, and `lib/recommendations/scoring.test.ts` covers deterministic behavior, explainability, weight overrides, and supported platform scoring.
 
+### Metadata Enrichment Pipeline (IGDB)
+
+`lib/metadata` adds an IGDB-first canonical enrichment pipeline with provider abstractions and refresh workflows:
+
+- `IGDBProvider` defines the real IGDB API integration surface (`searchByTitle`, `searchByAlias`, `searchByExternalIds`, `getGameDetails`, `getFranchise`, `getPlatformMappings`).
+- `InMemoryIGDBProvider` provides deterministic fixture data for tests and local development.
+- `MetadataEnrichmentService` implements `enrichGame`, `bulkEnrich`, `refreshGame`, and `refreshAll`.
+- `MetadataRefreshService` provides a dedicated refresh workflow wrapper for scheduled/manual refresh jobs.
+- Deterministic matching priority is implemented as:
+  1. exact title
+  2. alias
+  3. franchise + title similarity
+  4. release date validation
+
+The normalization pipeline enriches canonical `Game` + `GameMetadata` records with:
+
+- aliases and alias match keys
+- franchise and series links
+- genres, themes/keywords (as tags)
+- release date
+- developers and publishers
+- cover art and screenshot URLs (reference-only; no asset downloads)
+- supported platform mappings (Steam, Nintendo Switch, GBA, PSP, PSVita)
+
+Caching behavior:
+
+- Avoids repeated provider calls within a configurable TTL.
+- Tracks refresh timestamps in cache records.
+- Supports forced refresh (`forceRefresh: true`) for workflow reruns.
+
 ## App Routes
 
 - `/` — landing / welcome
