@@ -21,6 +21,9 @@ import type {
   MetadataStore,
 } from "@/lib/metadata/types";
 
+const DEFAULT_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const DEFAULT_RELEASE_DATE = "1970-01-01";
+
 export class MetadataEnrichmentError extends Error {
   constructor(message: string) {
     super(message);
@@ -46,7 +49,7 @@ export class MetadataEnrichmentService {
     private readonly provider: MetadataProvider,
     options: MetadataEnrichmentServiceOptions = {},
   ) {
-    this.cacheTtlMs = options.cacheTtlMs ?? 1000 * 60 * 60 * 24;
+    this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     this.store = options.store ?? new InMemoryMetadataStore();
   }
 
@@ -253,7 +256,7 @@ function normalizeEnrichedRecord(
     franchiseId: franchise?.id,
     seriesId: series?.id,
     description: gameDetails.summary ?? `${gameDetails.title} metadata imported from IGDB.`,
-    releaseDate: gameDetails.releaseDate ?? input.releaseDate ?? "1970-01-01",
+    releaseDate: gameDetails.releaseDate ?? input.releaseDate ?? DEFAULT_RELEASE_DATE,
     developer: uniqueStrings(gameDetails.developers),
     publisher: uniqueStrings(gameDetails.publishers),
     genres: toGenres(gameDetails.genres),

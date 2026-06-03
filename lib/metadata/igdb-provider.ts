@@ -100,7 +100,7 @@ export class IGDBProvider implements MetadataProvider {
       method: "POST",
       headers: {
         "Client-ID": this.config.clientId,
-        Authorization: "Bearer " + this.config.accessToken,
+        Authorization: "Bearer ".concat(this.config.accessToken),
         "Content-Type": "text/plain",
       },
       body: query,
