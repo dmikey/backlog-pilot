@@ -1,6 +1,7 @@
 import type { GameStatus } from "@/lib/library/types";
 
 import { FranchiseTrackingService } from "@/lib/franchises/tracking-service";
+import { toPercentage } from "@/lib/franchises/utils";
 import type { SeriesProgress } from "@/lib/franchises/types";
 
 const trackedStatuses: GameStatus[] = ["Completed", "Active", "Abandoned", "Unplayed"];
@@ -47,12 +48,4 @@ function createTotals(statuses: GameStatus[]) {
   }
 
   return totals;
-}
-
-function toPercentage(completed: number, total: number) {
-  if (total === 0) {
-    return 0;
-  }
-
-  return Math.round((completed / total) * 1000) / 10;
 }

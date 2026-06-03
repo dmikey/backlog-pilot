@@ -49,7 +49,7 @@ export class FranchiseTrackingService {
 
     return [...grouped.entries()]
       .map(([franchiseId, entries]) => ({
-        franchise: this.getFranchise(franchiseId, entries[0]?.canonicalGame),
+        franchise: this.getFranchise(franchiseId),
         catalogGames: this.listFranchiseGames(franchiseId),
         libraryGames: entries.slice().sort(compareLibraryGames),
       }))
@@ -148,11 +148,11 @@ export class FranchiseTrackingService {
     return libraryGames.filter((entry) => (excludeArchived ? entry.game.status !== "Archived" : true));
   }
 
-  private getFranchise(franchiseId: string, sampleGame?: Game): Franchise {
+  private getFranchise(franchiseId: string): Franchise {
     return (
       this.franchisesById.get(franchiseId) ?? {
         id: franchiseId,
-        name: sampleGame?.canonicalTitle.split(":")[0] ?? humanizeId(franchiseId),
+        name: humanizeId(franchiseId),
         normalizedName: normalizeId(franchiseId),
       }
     );
@@ -162,8 +162,8 @@ export class FranchiseTrackingService {
     return (
       this.seriesById.get(seriesId) ?? {
         id: seriesId,
-        franchiseId: sampleGame?.franchiseId ?? `fr-${normalizeId(seriesId)}`,
-        name: sampleGame?.canonicalTitle.split(":")[0] ?? humanizeId(seriesId),
+        franchiseId: sampleGame?.franchiseId ?? fallbackFranchiseIdForSeries(seriesId),
+        name: humanizeId(seriesId),
         normalizedName: normalizeId(seriesId),
       }
     );
@@ -171,7 +171,13 @@ export class FranchiseTrackingService {
 }
 
 function compareGames(left: Game, right: Game) {
-  return left.releaseDate.localeCompare(right.releaseDate) || left.canonicalTitle.localeCompare(right.canonicalTitle);
+  const releaseDateComparison = left.releaseDate.localeCompare(right.releaseDate);
+
+  if (releaseDateComparison !== 0) {
+    return releaseDateComparison;
+  }
+
+  return left.canonicalTitle.localeCompare(right.canonicalTitle);
 }
 
 function compareLibraryGames(left: LibraryGameWithOwnership, right: LibraryGameWithOwnership) {
@@ -189,4 +195,8 @@ function humanizeId(value: string) {
 
 function normalizeId(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function fallbackFranchiseIdForSeries(seriesId: string) {
+  return `fr-${normalizeId(seriesId)}`;
 }

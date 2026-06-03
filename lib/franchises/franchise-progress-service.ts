@@ -3,6 +3,7 @@ import type { LibraryGameWithOwnership } from "@/lib/library/types";
 
 import { SeriesProgressService } from "@/lib/franchises/series-progress-service";
 import { FranchiseTrackingService } from "@/lib/franchises/tracking-service";
+import { toPercentage } from "@/lib/franchises/utils";
 import type {
   FranchiseCampaign,
   FranchiseDashboardSummary,
@@ -111,13 +112,14 @@ export class FranchiseProgressService {
       const closestSeries = entry.series.find(
         (series) => series.totalOwned > series.totalCompleted && series.totalOwned - series.totalCompleted <= 1,
       );
+      const abandonedLabel = entry.totalAbandoned === 1 ? "entry" : "entries";
 
       if (entry.totalAbandoned > 0) {
         campaigns.push({
           franchiseId: entry.franchiseId,
           franchiseName: entry.franchiseName,
           type: "resume_abandoned_franchise",
-          description: `Resume ${entry.franchiseName} with ${entry.totalAbandoned} abandoned entr${entry.totalAbandoned === 1 ? "y" : "ies"}.`,
+          description: `Resume ${entry.franchiseName} with ${entry.totalAbandoned} abandoned ${abandonedLabel}.`,
           remainingGames,
           nextRecommendedGameId: entry.nextRecommendedGameId,
           nextRecommendedGameTitle: entry.nextRecommendedGameTitle,
@@ -164,14 +166,6 @@ function countStatus(
   status: "Completed" | "Active" | "Abandoned" | "Unplayed",
 ) {
   return progress.filter((entry) => entry.game.status === status).length;
-}
-
-function toPercentage(completed: number, total: number) {
-  if (total === 0) {
-    return 0;
-  }
-
-  return Math.round((completed / total) * 1000) / 10;
 }
 
 function compareNearCompletion(left: FranchiseProgress, right: FranchiseProgress) {

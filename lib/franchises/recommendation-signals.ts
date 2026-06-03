@@ -25,7 +25,17 @@ export class FranchiseRecommendationSignals {
           0,
         ) / Math.max(libraryGames.length, 1);
       const remainingGames = progress.totalOwned - progress.totalCompleted;
-      const closestSeries = progress.series[0];
+      const closestSeries = progress.series.reduce<typeof progress.series[number] | undefined>((best, current) => {
+        if (!best) {
+          return current;
+        }
+
+        if (current.completionPercentage === best.completionPercentage) {
+          return current.seriesName.localeCompare(best.seriesName) < 0 ? current : best;
+        }
+
+        return current.completionPercentage > best.completionPercentage ? current : best;
+      }, undefined);
       const baseAffinity =
         (progress.totalCompleted + progress.totalActive * 0.65 + progress.totalUnplayed * 0.25 - progress.totalAbandoned * 0.35) /
         Math.max(progress.totalOwned, 1);

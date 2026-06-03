@@ -67,6 +67,8 @@ export interface FranchiseRecommendationSignalSet {
   seriesContinuationBonus: number;
 }
 
+// These campaign types intentionally cover current and planned flows so future
+// dashboard payloads can use the same contract without reshaping responses.
 export type FranchiseCampaignType =
   | "complete_trilogy"
   | "complete_franchise"
