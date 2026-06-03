@@ -21,6 +21,41 @@ export interface SteamProfile {
   profileUrl: string;
 }
 
+export interface SteamOwnedGame {
+  appId: number;
+  title: string;
+  totalPlaytimeMinutes: number;
+  lastPlayedAt?: string;
+  icon?: string;
+  logo?: string;
+}
+
+export type SteamSyncState = "idle" | "running" | "completed" | "failed";
+
+export interface SteamSyncStatus {
+  userId: string;
+  state: SteamSyncState;
+  mode: "manual" | "automatic";
+  startedAt?: string;
+  completedAt?: string;
+  lastSyncAt?: string;
+  gamesImported: number;
+  gamesMatched: number;
+  gamesUnmatched: number;
+  newAcquisitions: number;
+  removedTitles: number;
+  updatedGames: number;
+  durationMs?: number;
+  error?: string;
+}
+
+export interface UnmatchedSteamGame {
+  userId: string;
+  steamAppId: number;
+  title: string;
+  importedAt: string;
+}
+
 export interface SteamConfig {
   apiKey: string;
   callbackUrl: string;

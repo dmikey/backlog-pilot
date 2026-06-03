@@ -1,4 +1,9 @@
-import type { SteamAccount, SteamAccountStatus } from "@/lib/steam/types";
+import type {
+  SteamAccount,
+  SteamAccountStatus,
+  SteamSyncStatus,
+  UnmatchedSteamGame,
+} from "@/lib/steam/types";
 
 export interface PendingSteamAuthState {
   state: string;
@@ -25,6 +30,16 @@ export interface SteamAuthStateRepository {
 export interface SteamNonceRepository {
   has(nonce: string): boolean;
   add(nonce: string, expiresAt: number): void;
+}
+
+export interface SteamSyncStatusRepository {
+  getByUserId(userId: string): SteamSyncStatus | undefined;
+  upsert(status: SteamSyncStatus): SteamSyncStatus;
+}
+
+export interface SteamUnmatchedGameRepository {
+  listByUserId(userId: string): UnmatchedSteamGame[];
+  replaceByUserId(userId: string, games: UnmatchedSteamGame[]): UnmatchedSteamGame[];
 }
 
 class InMemorySteamAccountRepository implements SteamAccountRepository {
@@ -115,10 +130,38 @@ class InMemorySteamNonceRepository implements SteamNonceRepository {
   }
 }
 
+class InMemorySteamSyncStatusRepository implements SteamSyncStatusRepository {
+  private readonly statuses = new Map<string, SteamSyncStatus>();
+
+  getByUserId(userId: string) {
+    return this.statuses.get(userId);
+  }
+
+  upsert(status: SteamSyncStatus) {
+    this.statuses.set(status.userId, status);
+    return status;
+  }
+}
+
+class InMemorySteamUnmatchedGameRepository implements SteamUnmatchedGameRepository {
+  private readonly unmatchedByUser = new Map<string, UnmatchedSteamGame[]>();
+
+  listByUserId(userId: string) {
+    return this.unmatchedByUser.get(userId) ?? [];
+  }
+
+  replaceByUserId(userId: string, games: UnmatchedSteamGame[]) {
+    this.unmatchedByUser.set(userId, games);
+    return games;
+  }
+}
+
 export interface SteamRepositorySet {
   accounts: SteamAccountRepository;
   authStates: SteamAuthStateRepository;
   nonces: SteamNonceRepository;
+  syncStatuses: SteamSyncStatusRepository;
+  unmatchedGames: SteamUnmatchedGameRepository;
 }
 
 export function createInMemorySteamRepository(): SteamRepositorySet {
@@ -126,6 +169,8 @@ export function createInMemorySteamRepository(): SteamRepositorySet {
     accounts: new InMemorySteamAccountRepository(),
     authStates: new InMemorySteamAuthStateRepository(),
     nonces: new InMemorySteamNonceRepository(),
+    syncStatuses: new InMemorySteamSyncStatusRepository(),
+    unmatchedGames: new InMemorySteamUnmatchedGameRepository(),
   };
 }
 
