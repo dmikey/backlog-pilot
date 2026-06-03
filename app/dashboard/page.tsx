@@ -109,7 +109,7 @@ export default async function DashboardPage({
               <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
                 Session length
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Tune tonight&apos;s pacing</h3>
+              <h3 className="mt-2 text-xl font-semibold text-white">Tune tonight’s pacing</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {service.getSessionOptions().options.map((option) => {

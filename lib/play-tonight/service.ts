@@ -35,7 +35,15 @@ export const playTonightSessionOptions: SessionOption[] = [
 ];
 
 const defaultSessionOption = playTonightSessionOptions[2];
-const maxRecommendations = 4;
+const decisionFatigueLimit = 4;
+const defaultOwnedDays = 365;
+const sessionDurationBands = {
+  "15-minutes": { maxHours: 35 },
+  "30-minutes": { maxHours: 50 },
+  "1-hour": { maxHours: 80 },
+  "2-hours": { maxHours: 120 },
+  "4-plus-hours": { minHours: 35 },
+} as const;
 
 const feedbackToAnalyticsEvent: Record<
   PlayTonightAction,
@@ -93,7 +101,7 @@ export class PlayTonightService {
       userId: input.userId,
       sessionOption,
       selectedPlatform,
-    }).slice(0, maxRecommendations);
+    }).slice(0, decisionFatigueLimit);
 
     const primary = ranked[0];
 
@@ -121,11 +129,11 @@ export class PlayTonightService {
       primaryRecommendation: cards[0] as PlayTonightRecommendationCard,
       alternatives: cards.slice(1),
       decisionFatigueGuard: {
-        maxRecommendations,
+        maxRecommendations: decisionFatigueLimit,
         shownRecommendations: cards.length,
       },
       coachContext: {
-        summary: `Top recommendation balances score, session fit for ${sessionOption.label}, and platform confidence in under 30 seconds.`,
+        summary: `Top recommendation balances score, session fit for ${sessionOption.label}, and platform confidence for a quick decision.`,
         keySignals: cards[0]?.recommendationReasons.slice(0, 3) ?? [],
       },
       analytics: this.getAnalyticsSummary(),
@@ -321,21 +329,17 @@ export class PlayTonightService {
 
   private matchesSessionFilter(entry: RankedRecommendation, sessionOptionId: string) {
     const estimated = entry.estimatedCompletionHours;
+    const band = sessionDurationBands[sessionOptionId as keyof typeof sessionDurationBands];
 
-    switch (sessionOptionId) {
-      case "15-minutes":
-        return estimated <= 35;
-      case "30-minutes":
-        return estimated <= 50;
-      case "1-hour":
-        return estimated <= 80;
-      case "2-hours":
-        return estimated <= 120;
-      case "4-plus-hours":
-        return estimated >= 35;
-      default:
-        return true;
+    if (!band) {
+      return true;
     }
+
+    if ("maxHours" in band) {
+      return estimated <= band.maxHours;
+    }
+
+    return estimated >= band.minHours;
   }
 
   private toScoringCandidate(entry: LibraryGameWithOwnership): ScoringCandidate {
@@ -501,13 +505,13 @@ function toImportSource(platform: SupportedLibraryPlatform) {
 
 function toOwnedDays(acquiredAt?: string) {
   if (!acquiredAt) {
-    return 365;
+    return defaultOwnedDays;
   }
 
   const acquired = Date.parse(acquiredAt);
 
   if (!Number.isFinite(acquired)) {
-    return 365;
+    return defaultOwnedDays;
   }
 
   const elapsed = Date.now() - acquired;

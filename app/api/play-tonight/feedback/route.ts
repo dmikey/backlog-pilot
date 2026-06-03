@@ -27,7 +27,9 @@ export async function POST(request: Request) {
       throw new LibraryValidationError("recommendationId is required.");
     }
 
-    if (!payload.action || !playTonightActions.includes(payload.action as (typeof playTonightActions)[number])) {
+    const action = parsePlayTonightAction(payload.action);
+
+    if (!action) {
       throw new LibraryValidationError(
         `action must be one of: ${playTonightActions.join(", ")}.`,
       );
@@ -42,7 +44,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const action = payload.action as (typeof playTonightActions)[number];
     const service = getPlayTonightService();
     const result = service.submitFeedback({
       userId,
@@ -61,4 +62,16 @@ export async function POST(request: Request) {
 
     return toErrorResponse(error);
   }
+}
+
+function parsePlayTonightAction(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  if (playTonightActions.includes(value as (typeof playTonightActions)[number])) {
+    return value as (typeof playTonightActions)[number];
+  }
+
+  return undefined;
 }

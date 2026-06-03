@@ -26,9 +26,11 @@ export function PlayTonightFeedbackActions({
   sessionOptionId: string;
 }) {
   const [activeAction, setActiveAction] = useState<PlayTonightAction | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleAction(action: PlayTonightAction) {
     setActiveAction(action);
+    setErrorMessage(null);
 
     try {
       await fetch("/api/play-tonight/feedback", {
@@ -45,25 +47,29 @@ export function PlayTonightFeedbackActions({
       });
     } catch {
       setActiveAction(null);
+      setErrorMessage("Could not save feedback. Please try again.");
     }
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-      {actionButtons.map((button) => (
-        <button
-          key={button.action}
-          type="button"
-          onClick={() => handleAction(button.action)}
-          className={`rounded-xl border px-3 py-2 text-xs font-medium uppercase tracking-[0.16em] transition ${
-            activeAction === button.action
-              ? "border-emerald-400/60 bg-emerald-500/20 text-emerald-100"
-              : "border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:bg-white/10"
-          }`}
-        >
-          {button.label}
-        </button>
-      ))}
+    <div className="space-y-2">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        {actionButtons.map((button) => (
+          <button
+            key={button.action}
+            type="button"
+            onClick={() => handleAction(button.action)}
+            className={`rounded-xl border px-3 py-2 text-xs font-medium uppercase tracking-[0.16em] transition ${
+              activeAction === button.action
+                ? "border-emerald-400/60 bg-emerald-500/20 text-emerald-100"
+                : "border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:bg-white/10"
+            }`}
+          >
+            {button.label}
+          </button>
+        ))}
+      </div>
+      {errorMessage ? <p className="text-xs text-rose-300">{errorMessage}</p> : null}
     </div>
   );
 }
