@@ -569,7 +569,7 @@ function getScoringCandidate(entry: LibraryEntry): ScoringCandidate {
   };
 }
 
-export const activeRotation = demoLibraryEntries
+export const recommendationEligibleEntries = demoLibraryEntries
   .filter((entry) => ["active", "next_up", "backlog"].includes(entry.playStatus));
 
 const activeRotationCandidates = demoLibraryEntries
@@ -597,18 +597,20 @@ if (!topRecommendation) {
   throw new Error("Expected at least one demo recommendation candidate.");
 }
 
+const topRecommendationScore = topRecommendation.score;
+
 export const demoRecommendation: Recommendation = {
   id: "recommendation-1",
   householdId: topRecommendation.entry.householdId,
   userId: topRecommendation.entry.userId,
   gameId: topRecommendation.entry.gameId,
   platformId: topRecommendation.entry.platformId,
-  score: Math.round(topRecommendation.score.score),
-  headline: `Scored ${Math.round(topRecommendation.score.score)} with ${Math.round(topRecommendation.score.confidence)} confidence based on weighted recommendation factors.`,
-  reasons: topRecommendation.score.reasons.map((reason, index) => ({
+  score: Math.round(topRecommendationScore.score),
+  headline: `Scored ${Math.round(topRecommendationScore.score)} with ${Math.round(topRecommendationScore.confidence)} confidence based on weighted recommendation factors.`,
+  reasons: topRecommendationScore.reasons.map((reason, index) => ({
     id: `reason-${index + 1}`,
     title: reason,
-    detail: `Factor-based rationale generated deterministically by the recommendation scoring engine.`,
+    detail: `Scoring factor signal: ${reason}`,
   })),
 };
 

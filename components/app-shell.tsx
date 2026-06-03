@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 
 import { Panel } from "@/components/panel";
 import {
-  activeRotation,
   demoHousehold,
   demoRecommendation,
   demoUsers,
   getGameById,
   getPlatformById,
+  recommendationEligibleEntries,
 } from "@/lib/demo-data";
 
 const navigation = [
@@ -129,7 +129,7 @@ export function AppShell({
         {children}
 
         <div className="grid gap-4 xl:grid-cols-3">
-          {activeRotation.map((entry) => (
+          {recommendationEligibleEntries.map((entry) => (
             <Panel key={entry.id} className="space-y-2">
               <p className="text-xs uppercase tracking-[0.24em] text-zinc-400">
                 Active rotation
