@@ -25,6 +25,7 @@ model User {
   memberships     HouseholdMembership[]
   libraryEntries  LibraryEntry[]
   recommendations Recommendation[]
+  steamAccounts   SteamAccount[]
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 }
@@ -111,4 +112,26 @@ model RecommendationReason {
   detail           String
   sortOrder        Int            @default(0)
   recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+}
+
+model SteamAccount {
+  id              String             @id @default(cuid())
+  userId          String
+  steamId         String
+  profileUrl      String
+  avatarUrl       String
+  displayName     String
+  linkedAt        DateTime           @default(now())
+  lastValidatedAt DateTime           @default(now())
+  status          SteamAccountStatus @default(Active)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, steamId])
+  @@index([steamId])
+}
+
+enum SteamAccountStatus {
+  Active
+  Unlinked
+  ValidationFailed
 }
