@@ -118,7 +118,7 @@ export function AppShell({
               Tonight&apos;s lead
             </p>
             <p className="text-xl font-semibold text-white">
-              {recommendationGame.title}
+              {recommendationGame.canonicalTitle}
             </p>
             <p className="text-sm text-zinc-400">
               {recommendationPlatform.name} • {demoRecommendation.score}% match
@@ -135,7 +135,7 @@ export function AppShell({
                 Active rotation
               </p>
               <p className="text-lg font-semibold text-white">
-                {getGameById(entry.gameId).title}
+                {getGameById(entry.gameId).canonicalTitle}
               </p>
               <p className="text-sm text-zinc-400">
                 {getPlatformById(entry.platformId).name} • {entry.playStatus}

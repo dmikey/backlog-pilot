@@ -33,7 +33,9 @@ export default function LibraryPage() {
                 className="flex flex-col gap-2 rounded-2xl border border-white/8 bg-black/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium text-white">{getGameById(entry.gameId).title}</p>
+                  <p className="font-medium text-white">
+                    {getGameById(entry.gameId).canonicalTitle}
+                  </p>
                   <p className="mt-1 text-sm text-zinc-400">
                     {getPlatformById(entry.platformId).name} • owned by{" "}
                     {demoUsers.find((user) => user.id === entry.userId)?.displayName}
@@ -63,7 +65,7 @@ export default function LibraryPage() {
                 className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4"
               >
                 <p className="font-medium text-white">
-                  {getGameById(metadata.gameId).title}
+                  {getGameById(metadata.gameId).canonicalTitle}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
                   {metadata.mood}

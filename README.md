@@ -45,18 +45,56 @@ The app is intentionally recommendation-first rather than spreadsheet-first. Col
 
 ### Domain Foundation
 
-The initial scaffold includes typed models and demo data for:
+The canonical metadata scaffold includes typed models and demo data for:
 
 - Users
 - Households
 - Platforms
-- Games
+- Canonical games
+- Platform entries
 - Game metadata
-- Library entries
+- Franchises
+- Series
+- Genres
+- Tags
+- Library entries (household/user ownership context)
 - Recommendations
 - Recommendation reasons
 - Import sources
 - Play statuses
+
+#### Canonical model design
+
+- `Game` is platform-agnostic and stores canonical identity (`canonicalTitle`, `normalizedTitle`, aliases, edition metadata, franchise/series links, media, genres, tags, release info).
+- `PlatformEntry` stores platform-specific ownership records (`platform`, `platformGameId`, `ownershipType`, `acquiredDate`, `playtimeHours`, `completionStatus`) without duplicating the core `Game`.
+- `GameMetadata` stores duplicate detection keys (alias + edition match fields) and enrichment data (external IDs, completion time, review score, popularity, genre/franchise weighting).
+
+```mermaid
+flowchart TD
+  Franchise --> Series
+  Franchise --> Game
+  Series --> Game
+  Game --> GameMetadata
+  Game --> PlatformEntry
+  Game --> Genre
+  Game --> Tag
+  Game --> CoverArt["Cover Art"]
+  Game --> Screenshots
+  PlatformEntry --> Platform
+  LibraryEntry --> PlatformEntry
+  LibraryEntry --> User
+  LibraryEntry --> Household
+```
+
+#### Required seed examples
+
+`lib/demo-data.ts` includes canonical + platform entry examples for:
+
+- Persona 4 Golden
+- Yakuza 0
+- Monster Hunter Rise
+- Pokemon Emerald
+- Final Fantasy Tactics: The War of the Lions
 
 All MVP-first platforms are seeded in demo mode:
 

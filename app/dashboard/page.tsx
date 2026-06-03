@@ -31,7 +31,7 @@ export default async function DashboardPage() {
                 Play tonight
               </p>
               <h2 className="mt-2 text-3xl font-semibold text-white">
-                {recommendationGame.title}
+                {recommendationGame.canonicalTitle}
               </h2>
               <p className="mt-1 text-sm text-zinc-400">
                 {recommendationPlatform.name} • {recommendationMetadata.estimatedHours}
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
                     className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4"
                   >
                     <p className="font-medium text-white">
-                      {getGameById(entry.gameId).title}
+                      {getGameById(entry.gameId).canonicalTitle}
                     </p>
                     <p className="mt-1 text-sm text-zinc-400">
                       {getPlatformById(entry.platformId).name} • {entry.playStatus}
