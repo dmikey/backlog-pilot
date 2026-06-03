@@ -222,6 +222,37 @@ Current weighted factors:
 
 Factor weights are configuration-driven via `RecommendationScoringEngine` constructor options, and `lib/recommendations/scoring.test.ts` covers deterministic behavior, explainability, weight overrides, and supported platform scoring.
 
+### Franchise Completion Tracking Engine
+
+`lib/franchises` adds franchise and series-aware completion tracking on top of the canonical catalog and user library services.
+
+- `FranchiseTrackingService` groups owned canonicals into franchise and series buckets using the canonical `Game.franchiseId` and `Game.seriesId` links from metadata enrichment.
+- `FranchiseProgressService` calculates owned completion metrics, near-completion views, dashboard summaries, and campaign-ready progress snapshots.
+- `SeriesProgressService` exposes per-series completion progress inside each franchise.
+- `FranchiseRecommendationSignals` generates recommendation inputs for:
+  - `nearFranchiseCompletionBonus`
+  - `abandonedFranchisePenalty`
+  - `franchiseAffinityScore`
+  - `seriesContinuationBonus`
+
+Endpoints:
+
+- `GET /api/franchises/progress?userId=:userId`
+- `GET /api/franchises/:id/progress?userId=:userId`
+- `GET /api/franchises/:id/recommendations?userId=:userId`
+- `GET /api/franchises/near-completion?userId=:userId`
+
+Completion rules:
+
+- Progress is calculated as `completedOwnedGames / totalOwnedGames`.
+- Archived library entries are excluded by default.
+- Dashboard summaries expose closest franchises to completion, largest unfinished franchises, most completed franchises, abandoned runs, and active campaign suggestions.
+
+Recommendation integration:
+
+- Franchise signals are generated separately from the base recommendation score so callers can layer them into ranking without rewriting `RecommendationScoringEngine`.
+- This makes franchise-aware strategies straightforward for Backlog Coach, Completion Campaigns, Purchase Advisor, and Collection Dashboard flows.
+
 ### Metadata Enrichment Pipeline (IGDB)
 
 `lib/metadata` adds an IGDB-first canonical enrichment pipeline with provider abstractions and refresh workflows:
