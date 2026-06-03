@@ -166,6 +166,26 @@ UI support:
 
 - `/settings` now includes a **Connected accounts** section with Steam status, avatar, profile link, and disconnect action.
 
+### Steam Collection Synchronization
+
+`lib/steam` now includes a complete Steam library ingestion pipeline that maps owned Steam titles into canonical Backlog Pilot library records.
+
+- `SteamCollectionProvider` fetches and normalizes owned games (`appId`, title, playtime, last played, icon, logo).
+- `SteamGameMatcher` applies deterministic matching priority:
+  1. Steam app ID mapping
+  2. exact title match
+  3. alias match
+  4. franchise + edition validation
+- `SteamSyncService` runs idempotent initial and incremental sync, updates playtime metadata, tracks new and removed titles, and stores unmatched games.
+- `SteamSyncJob` wraps manual and scheduled sync execution surfaces.
+
+Routes:
+
+- `POST /steam/sync` — run manual sync and return summary counters
+- `GET /steam/sync/status?userId=:userId` — get latest sync status
+- `GET /steam/library?userId=:userId` — list Steam-only library with most-played / recently-played / never-played groupings
+- `POST /steam/sync/refresh` — user-triggered refresh sync
+
 ### Recommendation Scoring Engine
 
 `lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:
