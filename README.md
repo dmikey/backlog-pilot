@@ -222,6 +222,45 @@ Current weighted factors:
 
 Factor weights are configuration-driven via `RecommendationScoringEngine` constructor options, and `lib/recommendations/scoring.test.ts` covers deterministic behavior, explainability, weight overrides, and supported platform scoring.
 
+### Play Tonight Experience
+
+`lib/play-tonight` provides the recommendation-first “What should I play tonight?” flow by composing existing services instead of duplicating scoring logic.
+
+- `PlayTonightService` consumes:
+  - `RecommendationScoringEngine` (base score + reasons)
+  - `FranchiseRecommendationSignals` (continuation and completion momentum)
+  - `DuplicateOwnershipService` (duplicate ownership penalties)
+- Session-aware filtering is exposed through built-in options:
+  - 15 Minutes
+  - 30 Minutes
+  - 1 Hour
+  - 2 Hours
+  - 4+ Hours
+- Platform preference filtering is supported through the `platform` query parameter.
+- Recommendation payloads are intentionally capped at 4 cards (1 primary + up to 3 alternatives) to reduce decision fatigue.
+
+Endpoints:
+
+- `GET /api/play-tonight?userId=:userId[&session=:sessionOptionId][&platform=:platformId]`
+- `GET /api/play-tonight/alternatives?userId=:userId[&session=:sessionOptionId][&platform=:platformId]`
+- `GET /api/play-tonight/session-options`
+- `POST /api/play-tonight/feedback`
+
+Feedback actions:
+
+- `play_this`
+- `not_interested`
+- `remind_me_later`
+- `already_playing`
+- `finished_it`
+
+Analytics tracked:
+
+- recommendation impressions
+- recommendation acceptance
+- recommendation rejection
+- recommendation completion outcomes
+
 ### Franchise Completion Tracking Engine
 
 `lib/franchises` adds franchise and series-aware completion tracking on top of the canonical catalog and user library services.
