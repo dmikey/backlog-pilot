@@ -232,7 +232,7 @@ export const activeRotation = demoLibraryEntries.filter((entry) =>
   ["active", "next_up", "backlog"].includes(entry.playStatus),
 );
 
-function findByIdOrThrow<T extends { id?: string; gameId?: string }>(
+function findByIdOrThrow<T>(
   collection: T[],
   matcher: (item: T) => boolean,
   entityName: string,
