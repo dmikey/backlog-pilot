@@ -8,15 +8,17 @@ interface SteamCollectionProviderDependencies {
 
 interface SteamOwnedGamesResponse {
   response?: {
-    games?: Array<{
-      appid?: number;
-      name?: string;
-      playtime_forever?: number;
-      rtime_last_played?: number;
-      img_icon_url?: string;
-      img_logo_url?: string;
-    }>;
+    games?: SteamOwnedGamePayload[];
   };
+}
+
+interface SteamOwnedGamePayload {
+  appid?: number;
+  name?: string;
+  playtime_forever?: number;
+  rtime_last_played?: number;
+  img_icon_url?: string;
+  img_logo_url?: string;
 }
 
 export class SteamCollectionProvider {
@@ -47,14 +49,18 @@ export class SteamCollectionProvider {
     const games = payload.response?.games ?? [];
 
     return games
-      .filter((game) => typeof game.appid === "number" && typeof game.name === "string")
+      .filter(isCompleteOwnedGamePayload)
       .map((game) => normalizeSteamOwnedGame(game))
       .sort((left, right) => left.title.localeCompare(right.title));
   }
 }
 
-function normalizeSteamOwnedGame(game: Required<Pick<SteamOwnedGamesResponse["response"]["games"][number], "appid" | "name">> &
-  SteamOwnedGamesResponse["response"]["games"][number]): SteamOwnedGame {
+function normalizeSteamOwnedGame(
+  game: SteamOwnedGamePayload & {
+    appid: number;
+    name: string;
+  },
+): SteamOwnedGame {
   return {
     appId: game.appid,
     title: game.name.trim(),
@@ -74,4 +80,10 @@ function normalizeImageHash(value: string | undefined) {
   }
 
   return value.trim();
+}
+
+function isCompleteOwnedGamePayload(
+  game: SteamOwnedGamePayload,
+): game is SteamOwnedGamePayload & { appid: number; name: string } {
+  return typeof game.appid === "number" && typeof game.name === "string";
 }
