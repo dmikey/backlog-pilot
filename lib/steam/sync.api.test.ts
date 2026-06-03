@@ -174,3 +174,19 @@ test("Steam sync endpoints import, reconcile, and expose sync status/library dat
   );
   assert.equal(afterRefreshPayload.unmatched.length, 0);
 });
+
+test("Steam sync returns validation error when account is not connected", async () => {
+  setupSteamEnv();
+  resetUserLibraryServiceForTests();
+  resetSteamServicesForTests({
+    collectionFetchImpl: async () => Response.json({ response: { games: [] } }),
+  });
+
+  const response = await postSteamSync(
+    jsonRequest("http://localhost/steam/sync", "POST", { userId: "user-without-steam" }),
+  );
+
+  assert.equal(response.status, 400);
+  const payload = (await response.json()) as { error: string };
+  assert.equal(payload.error, "Steam account must be connected before syncing.");
+});

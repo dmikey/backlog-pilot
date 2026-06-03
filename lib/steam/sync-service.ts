@@ -95,10 +95,11 @@ export class SteamSyncService {
           newAcquisitions += 1;
         }
 
-        const playtimeHours = roundPlaytimeHours(game.totalPlaytimeMinutes);
+        const playtimeHours = convertPlaytimeMinutesToHours(game.totalPlaytimeMinutes);
         const nextStatus = playtimeHours > 0 ? "Active" : "Unplayed";
         const previousPlaytimeHours = existing?.game.playtimeHours ?? 0;
         const previousLastPlayedAt = getExistingLastPlayedAt(existing?.game.metadata);
+        const lastPlayedChanged = (previousLastPlayedAt ?? null) !== (game.lastPlayedAt ?? null);
 
         this.dependencies.libraryService.addGame({
           userId,
@@ -114,10 +115,7 @@ export class SteamSyncService {
           },
         });
 
-        if (
-          existing &&
-          (previousPlaytimeHours !== playtimeHours || previousLastPlayedAt !== game.lastPlayedAt)
-        ) {
+        if (existing && (previousPlaytimeHours !== playtimeHours || lastPlayedChanged)) {
           updatedGames += 1;
         }
       }
@@ -131,6 +129,8 @@ export class SteamSyncService {
 
         removedTitles += 1;
 
+        // Keep entries that are also owned on other platforms. Steam-only entries are removed when
+        // Steam no longer reports ownership for the app id.
         if (existing.ownershipRecords.every((record) => record.platform === "steam")) {
           this.dependencies.libraryService.removeGame(userId, existing.game.id);
         }
@@ -252,7 +252,7 @@ function toSteamMetadata(game: SteamOwnedGame, syncedAt: string) {
   };
 }
 
-function roundPlaytimeHours(totalPlaytimeMinutes: number) {
+function convertPlaytimeMinutesToHours(totalPlaytimeMinutes: number) {
   return Math.round((totalPlaytimeMinutes / 60) * 100) / 100;
 }
 

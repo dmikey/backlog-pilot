@@ -3,6 +3,8 @@ import { normalizeForMatch } from "@/lib/metadata/matching";
 import type { Game, GameMetadata } from "@/lib/domain/types";
 import type { SteamOwnedGame } from "@/lib/steam/types";
 
+const MIN_SIGNIFICANT_TOKEN_LENGTH = 4;
+
 export interface SteamGameMatch {
   game: Game;
   metadata: GameMetadata;
@@ -144,5 +146,7 @@ function isEditionCompatible(normalizedTitle: string, game: Game) {
   }
 
   const titleTokens = new Set(normalizedTitle.split("-").filter(Boolean));
-  return editionTokens.every((token) => titleTokens.has(token) || token.length < 4);
+  return editionTokens.every(
+    (token) => titleTokens.has(token) || token.length < MIN_SIGNIFICANT_TOKEN_LENGTH,
+  );
 }

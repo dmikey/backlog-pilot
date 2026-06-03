@@ -57,4 +57,12 @@ test("SteamGameMatcher applies franchise validation and avoids false positives",
   });
 
   assert.equal(unmatched, undefined);
+
+  const falsePositive = matcher.match({
+    appId: 999999995,
+    title: "Persona Kart Racing",
+    totalPlaytimeMinutes: 0,
+  });
+
+  assert.equal(falsePositive, undefined);
 });
