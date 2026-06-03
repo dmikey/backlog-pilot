@@ -163,15 +163,12 @@ export const demoGames: Game[] = [
       label: "Golden",
       canonicalEditionKey: "persona-4-golden",
     },
-    slug: "persona-4-golden",
-    title: "Persona 4 Golden",
-    year: 2012,
   },
   {
     id: "game-yakuza-0",
     canonicalTitle: "Yakuza 0",
     normalizedTitle: "yakuza-0",
-    aliases: ["Ryū ga Gotoku 0"],
+    aliases: ["Ryū ga Gotoku 0", "Ryu ga Gotoku 0"],
     normalizedAliases: ["ryu-ga-gotoku-0"],
     franchiseId: "fr-yakuza",
     seriesId: "series-yakuza-mainline",
@@ -196,9 +193,6 @@ export const demoGames: Game[] = [
       label: "Standard",
       canonicalEditionKey: "yakuza-0-standard",
     },
-    slug: "yakuza-0",
-    title: "Yakuza 0",
-    year: 2015,
   },
   {
     id: "game-monster-hunter-rise",
@@ -229,13 +223,10 @@ export const demoGames: Game[] = [
       label: "Base Game",
       canonicalEditionKey: "monster-hunter-rise-base",
     },
-    slug: "monster-hunter-rise",
-    title: "Monster Hunter Rise",
-    year: 2021,
   },
   {
     id: "game-pokemon-emerald",
-    canonicalTitle: "Pokémon Emerald",
+    canonicalTitle: "Pokemon Emerald",
     normalizedTitle: "pokemon-emerald",
     aliases: ["Pokemon Emerald Version"],
     normalizedAliases: ["pokemon-emerald-version"],
@@ -244,7 +235,7 @@ export const demoGames: Game[] = [
     description: "Third Hoenn release focused on Battle Frontier and polished pacing.",
     releaseDate: "2004-09-16",
     developer: ["Game Freak"],
-    publisher: ["Nintendo", "The Pokémon Company"],
+    publisher: ["Nintendo", "The Pokemon Company"],
     genres: [genreRpg, genreMonsterCollecting],
     tags: [tagCollection, tagPortable],
     coverArt: {
@@ -262,9 +253,6 @@ export const demoGames: Game[] = [
       label: "Emerald",
       canonicalEditionKey: "pokemon-emerald",
     },
-    slug: "pokemon-emerald",
-    title: "Pokemon Emerald",
-    year: 2004,
   },
   {
     id: "game-final-fantasy-tactics-wotl",
@@ -295,9 +283,6 @@ export const demoGames: Game[] = [
       label: "War of the Lions",
       canonicalEditionKey: "final-fantasy-tactics-war-of-the-lions",
     },
-    slug: "final-fantasy-tactics-war-of-the-lions",
-    title: "Final Fantasy Tactics: The War of the Lions",
-    year: 2007,
   },
 ];
 
@@ -305,8 +290,8 @@ export const demoGameMetadata: GameMetadata[] = [
   {
     gameId: "game-persona-4-golden",
     externalIds: {
-      steamAppId: "1113000",
-      igdbId: "4573",
+      steamAppId: 1113000,
+      igdbId: 4573,
       metacriticSlug: "persona-4-golden",
     },
     aliasMatchKeys: ["persona4golden", "p4g"],
@@ -315,9 +300,8 @@ export const demoGameMetadata: GameMetadata[] = [
     completionTimeHours: { main: 68, completionist: 110 },
     reviewScore: 93,
     popularity: 88,
-    genreWeights: { rpg: 1, narrative: 0.8 },
+    genreWeights: { "genre-rpg": 1 },
     franchiseCompletionWeight: 0.9,
-    franchise: "Persona",
     estimatedHours: 68,
     completionLikelihood: "medium",
     mood: "Long-form comfort RPG",
@@ -326,8 +310,8 @@ export const demoGameMetadata: GameMetadata[] = [
   {
     gameId: "game-yakuza-0",
     externalIds: {
-      steamAppId: "638970",
-      igdbId: "10952",
+      steamAppId: 638970,
+      igdbId: 10952,
       metacriticSlug: "yakuza-0",
     },
     aliasMatchKeys: ["yakuza0", "ryugagotoku0"],
@@ -336,9 +320,8 @@ export const demoGameMetadata: GameMetadata[] = [
     completionTimeHours: { main: 31, completionist: 140 },
     reviewScore: 89,
     popularity: 84,
-    genreWeights: { action: 0.9, rpg: 0.7 },
+    genreWeights: { "genre-action": 0.9, "genre-rpg": 0.7 },
     franchiseCompletionWeight: 0.85,
-    franchise: "Yakuza",
     estimatedHours: 31,
     completionLikelihood: "medium",
     mood: "Story-rich action contrast",
@@ -346,9 +329,9 @@ export const demoGameMetadata: GameMetadata[] = [
   {
     gameId: "game-monster-hunter-rise",
     externalIds: {
-      steamAppId: "1446780",
+      steamAppId: 1446780,
       nintendoTitleId: "0100559011740000",
-      igdbId: "114795",
+      igdbId: 114795,
       metacriticSlug: "monster-hunter-rise",
     },
     aliasMatchKeys: ["monsterhunterrise", "mhr"],
@@ -357,9 +340,8 @@ export const demoGameMetadata: GameMetadata[] = [
     completionTimeHours: { main: 23, completionist: 170 },
     reviewScore: 88,
     popularity: 91,
-    genreWeights: { action: 1, coop: 0.8 },
+    genreWeights: { "genre-action": 1, "genre-rpg": 0.6 },
     franchiseCompletionWeight: 0.8,
-    franchise: "Monster Hunter",
     estimatedHours: 23,
     completionLikelihood: "high",
     mood: "High-energy hunt loop",
@@ -369,7 +351,7 @@ export const demoGameMetadata: GameMetadata[] = [
     gameId: "game-pokemon-emerald",
     externalIds: {
       giantBombId: "3030-20483",
-      igdbId: "3598",
+      igdbId: 3598,
     },
     aliasMatchKeys: ["pokemonemerald", "pokemonemeraldversion"],
     editionMatchKeys: ["emerald", "definitive"],
@@ -377,9 +359,8 @@ export const demoGameMetadata: GameMetadata[] = [
     completionTimeHours: { main: 32, completionist: 210 },
     reviewScore: 90,
     popularity: 92,
-    genreWeights: { rpg: 1, collection: 0.95 },
+    genreWeights: { "genre-rpg": 1, "genre-monster-collecting": 0.95 },
     franchiseCompletionWeight: 0.95,
-    franchise: "Pokemon",
     estimatedHours: 32,
     completionLikelihood: "high",
     mood: "Retro collection nostalgia",
@@ -387,7 +368,7 @@ export const demoGameMetadata: GameMetadata[] = [
   {
     gameId: "game-final-fantasy-tactics-wotl",
     externalIds: {
-      igdbId: "7367",
+      igdbId: 7367,
       metacriticSlug: "final-fantasy-tactics-the-war-of-the-lions",
     },
     aliasMatchKeys: ["finalfantasytacticswotl", "fftwotl"],
@@ -396,9 +377,8 @@ export const demoGameMetadata: GameMetadata[] = [
     completionTimeHours: { main: 45, completionist: 105 },
     reviewScore: 88,
     popularity: 76,
-    genreWeights: { tactics: 1, rpg: 0.9 },
+    genreWeights: { "genre-tactics": 1, "genre-rpg": 0.9 },
     franchiseCompletionWeight: 0.75,
-    franchise: "Final Fantasy",
     estimatedHours: 45,
     completionLikelihood: "low",
     mood: "Tactical deep-focus campaign",
@@ -636,5 +616,14 @@ export function getMetadataByGameId(gameId: string) {
     (metadata) => metadata.gameId === gameId,
     "game metadata",
     gameId,
+  );
+}
+
+export function getFranchiseById(franchiseId: string) {
+  return findByIdOrThrow(
+    demoFranchises,
+    (franchise) => franchise.id === franchiseId,
+    "franchise",
+    franchiseId,
   );
 }

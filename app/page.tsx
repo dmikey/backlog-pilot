@@ -47,7 +47,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-3xl font-semibold text-white">{game.title}</h2>
+                <h2 className="text-3xl font-semibold text-white">{game.canonicalTitle}</h2>
                 <p className="text-sm text-zinc-400">
                   Suggested from your {platform.name} backlog
                 </p>

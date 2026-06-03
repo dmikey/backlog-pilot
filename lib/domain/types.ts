@@ -87,7 +87,19 @@ export interface ImageAsset {
   alt: string;
 }
 
-export type EditionKind = "standard" | "remaster" | "port" | "definitive" | "collection";
+/**
+ * standard: original baseline release
+ * remaster: upgraded release of the same platform lineage
+ * port: release adapted to a different platform
+ * definitive: expanded/corrected edition intended as the canonical package
+ * collection: bundle release containing multiple games
+ */
+export type EditionKind =
+  | "standard"
+  | "remaster"
+  | "port"
+  | "definitive"
+  | "collection";
 
 export interface GameEdition {
   kind: EditionKind;
@@ -112,32 +124,39 @@ export interface Game {
   coverArt: ImageAsset;
   screenshots: ImageAsset[];
   edition: GameEdition;
-  slug: string;
-  title: string;
-  year: number;
+}
+
+export interface ExternalGameIds {
+  steamAppId?: number;
+  nintendoTitleId?: string;
+  giantBombId?: string;
+  igdbId?: number;
+  metacriticSlug?: string;
+}
+
+export interface CompletionTimeHours {
+  main: number;
+  completionist?: number;
+}
+
+export interface PlatformEntryMetadata {
+  editionLabel?: string;
+  region?: string;
+  storefrontUrl?: string;
+  romSet?: string;
 }
 
 export interface GameMetadata {
   gameId: string;
-  externalIds: {
-    steamAppId?: string;
-    nintendoTitleId?: string;
-    giantBombId?: string;
-    igdbId?: string;
-    metacriticSlug?: string;
-  };
+  externalIds: ExternalGameIds;
   aliasMatchKeys: string[];
   editionMatchKeys: string[];
   duplicateDetectionKey: string;
-  completionTimeHours: {
-    main: number;
-    completionist?: number;
-  };
+  completionTimeHours: CompletionTimeHours;
   reviewScore?: number;
   popularity?: number;
-  genreWeights?: Record<string, number>;
+  genreWeights?: Partial<Record<Genre["id"], number>>;
   franchiseCompletionWeight?: number;
-  franchise: string;
   estimatedHours: number;
   completionLikelihood: "high" | "medium" | "low";
   mood: string;
@@ -153,12 +172,7 @@ export interface PlatformEntry {
   acquiredDate?: string;
   playtimeHours?: number;
   completionStatus: CompletionStatus;
-  platformMetadata?: {
-    editionLabel?: string;
-    region?: string;
-    storefrontUrl?: string;
-    romSet?: string;
-  };
+  platformMetadata?: PlatformEntryMetadata;
 }
 
 export interface LibraryEntry {

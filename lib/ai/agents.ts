@@ -1,6 +1,7 @@
 import {
   demoLibraryEntries,
   demoRecommendation,
+  getFranchiseById,
   getGameById,
   getMetadataByGameId,
   getPlatformById,
@@ -35,7 +36,7 @@ export const backlogCoachAgent: BacklogCoachAgent = {
     const metadata = getMetadataByGameId(recommendation.gameId);
 
     return {
-      title: `Play ${game.title} tonight`,
+      title: `Play ${game.canonicalTitle} tonight`,
       summary:
         "Deterministic placeholder guidance for the first scaffold. This will later become a real LLM-backed coaching explanation.",
       bullets: [
@@ -66,13 +67,16 @@ export const recommendationExplainer: RecommendationExplainer = {
   async explain(recommendation) {
     const game = getGameById(recommendation.gameId);
     const metadata = getMetadataByGameId(recommendation.gameId);
+    const franchise = game.franchiseId
+      ? getFranchiseById(game.franchiseId).name
+      : "Standalone game";
 
     return {
-      title: `${game.title} is the most balanced next move`,
+      title: `${game.canonicalTitle} is the most balanced next move`,
       summary: recommendation.headline,
       bullets: [
         `Mood fit: ${metadata.mood}.`,
-        `Franchise context: ${metadata.franchise}.`,
+        `Franchise context: ${franchise}.`,
         "Future explainers can swap this deterministic output for personalized model-driven language.",
       ],
     };
@@ -84,7 +88,7 @@ export const collectionCuratorAgent: CollectionCuratorAgent = {
     const forgotten = demoLibraryEntries
       .filter((entry) => entry.playStatus === "backlog")
       .slice(0, 2)
-      .map((entry) => getGameById(entry.gameId).title);
+      .map((entry) => getGameById(entry.gameId).canonicalTitle);
 
     return {
       title: "Forgotten collection signals",
