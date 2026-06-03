@@ -140,6 +140,36 @@ const tagActionCombat: Tag = { id: "tag-action-combat", name: "Action Combat" };
 
 export const demoGames: Game[] = [
   {
+    id: "game-persona-3-portable",
+    canonicalTitle: "Persona 3 Portable",
+    normalizedTitle: "persona-3-portable",
+    aliases: ["P3P"],
+    normalizedAliases: ["p3p"],
+    franchiseId: "fr-persona",
+    seriesId: "series-persona-mainline",
+    description: "Portable Persona 3 release blending dungeon crawling with social simulation.",
+    releaseDate: "2009-11-01",
+    developer: ["Atlus"],
+    publisher: ["Atlus"],
+    genres: [genreRpg],
+    tags: [tagLongForm, tagPortable],
+    coverArt: {
+      url: "https://images.example.com/persona-3-portable/cover.jpg",
+      alt: "Persona 3 Portable cover art",
+    },
+    screenshots: [
+      {
+        url: "https://images.example.com/persona-3-portable/screen-1.jpg",
+        alt: "Persona 3 Portable Tartarus scene",
+      },
+    ],
+    edition: {
+      kind: "port",
+      label: "Portable",
+      canonicalEditionKey: "persona-3-portable",
+    },
+  },
+  {
     id: "game-persona-4-golden",
     canonicalTitle: "Persona 4 Golden",
     normalizedTitle: "persona-4-golden",
@@ -170,6 +200,36 @@ export const demoGames: Game[] = [
     },
   },
   {
+    id: "game-persona-5-royal",
+    canonicalTitle: "Persona 5 Royal",
+    normalizedTitle: "persona-5-royal",
+    aliases: ["P5R", "Persona5Royal"],
+    normalizedAliases: ["p5r", "persona5royal"],
+    franchiseId: "fr-persona",
+    seriesId: "series-persona-mainline",
+    description: "Expanded Persona 5 release with a revised calendar, confidants, and palace content.",
+    releaseDate: "2019-10-31",
+    developer: ["Atlus"],
+    publisher: ["Atlus", "Sega"],
+    genres: [genreRpg],
+    tags: [tagLongForm],
+    coverArt: {
+      url: "https://images.example.com/persona-5-royal/cover.jpg",
+      alt: "Persona 5 Royal cover art",
+    },
+    screenshots: [
+      {
+        url: "https://images.example.com/persona-5-royal/screen-1.jpg",
+        alt: "Persona 5 Royal palace scene",
+      },
+    ],
+    edition: {
+      kind: "definitive",
+      label: "Royal",
+      canonicalEditionKey: "persona-5-royal",
+    },
+  },
+  {
     id: "game-yakuza-0",
     canonicalTitle: "Yakuza 0",
     normalizedTitle: "yakuza-0",
@@ -197,6 +257,36 @@ export const demoGames: Game[] = [
       kind: "standard",
       label: "Standard",
       canonicalEditionKey: "yakuza-0-standard",
+    },
+  },
+  {
+    id: "game-yakuza-kiwami",
+    canonicalTitle: "Yakuza Kiwami",
+    normalizedTitle: "yakuza-kiwami",
+    aliases: ["Like a Dragon Kiwami"],
+    normalizedAliases: ["like-a-dragon-kiwami"],
+    franchiseId: "fr-yakuza",
+    seriesId: "series-yakuza-mainline",
+    description: "Modern remake of the original Yakuza with Majima Everywhere and refreshed combat.",
+    releaseDate: "2016-01-21",
+    developer: ["Ryu Ga Gotoku Studio"],
+    publisher: ["Sega"],
+    genres: [genreAction, genreRpg],
+    tags: [tagLongForm],
+    coverArt: {
+      url: "https://images.example.com/yakuza-kiwami/cover.jpg",
+      alt: "Yakuza Kiwami cover art",
+    },
+    screenshots: [
+      {
+        url: "https://images.example.com/yakuza-kiwami/screen-1.jpg",
+        alt: "Yakuza Kiwami Kamurocho scene",
+      },
+    ],
+    edition: {
+      kind: "remaster",
+      label: "Kiwami",
+      canonicalEditionKey: "yakuza-kiwami",
     },
   },
   {
@@ -293,6 +383,24 @@ export const demoGames: Game[] = [
 
 export const demoGameMetadata: GameMetadata[] = [
   {
+    gameId: "game-persona-3-portable",
+    externalIds: {
+      igdbId: 3333,
+      metacriticSlug: "persona-3-portable",
+    },
+    aliasMatchKeys: ["persona3portable", "p3p"],
+    editionMatchKeys: ["portable", "port"],
+    duplicateDetectionKey: "persona-3-portable",
+    completionTimeHours: { main: 64, completionist: 102 },
+    reviewScore: 89,
+    popularity: 80,
+    genreWeights: { "genre-rpg": 1 },
+    franchiseCompletionWeight: 0.88,
+    estimatedHours: 64,
+    completionLikelihood: "medium",
+    mood: "Portable social-link campaign",
+  },
+  {
     gameId: "game-persona-4-golden",
     externalIds: {
       steamAppId: 1113000,
@@ -313,6 +421,24 @@ export const demoGameMetadata: GameMetadata[] = [
     duplicateOwnershipNote: "Owned on both Steam and PSVita.",
   },
   {
+    gameId: "game-persona-5-royal",
+    externalIds: {
+      igdbId: 112130,
+      metacriticSlug: "persona-5-royal",
+    },
+    aliasMatchKeys: ["persona5royal", "p5r"],
+    editionMatchKeys: ["royal", "definitive"],
+    duplicateDetectionKey: "persona-5-royal",
+    completionTimeHours: { main: 101, completionist: 143 },
+    reviewScore: 95,
+    popularity: 94,
+    genreWeights: { "genre-rpg": 1 },
+    franchiseCompletionWeight: 0.96,
+    estimatedHours: 101,
+    completionLikelihood: "low",
+    mood: "Prestige JRPG marathon",
+  },
+  {
     gameId: "game-yakuza-0",
     externalIds: {
       steamAppId: 638970,
@@ -330,6 +456,24 @@ export const demoGameMetadata: GameMetadata[] = [
     estimatedHours: 31,
     completionLikelihood: "medium",
     mood: "Story-rich action contrast",
+  },
+  {
+    gameId: "game-yakuza-kiwami",
+    externalIds: {
+      igdbId: 19418,
+      metacriticSlug: "yakuza-kiwami",
+    },
+    aliasMatchKeys: ["yakuzakiwami", "likeadragonkiwami"],
+    editionMatchKeys: ["kiwami", "remaster"],
+    duplicateDetectionKey: "yakuza-kiwami",
+    completionTimeHours: { main: 18, completionist: 62 },
+    reviewScore: 81,
+    popularity: 75,
+    genreWeights: { "genre-action": 0.9, "genre-rpg": 0.7 },
+    franchiseCompletionWeight: 0.82,
+    estimatedHours: 18,
+    completionLikelihood: "high",
+    mood: "Focused franchise continuation",
   },
   {
     gameId: "game-monster-hunter-rise",
