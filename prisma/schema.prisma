@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Household {
+  id              String                @id @default(cuid())
+  name            String
+  timezone        String
+  memberships     HouseholdMembership[]
+  libraryEntries  LibraryEntry[]
+  recommendations Recommendation[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+}
+
+model User {
+  id              String                @id @default(cuid())
+  displayName     String
+  roleLabel       String
+  memberships     HouseholdMembership[]
+  libraryEntries  LibraryEntry[]
+  recommendations Recommendation[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+}
+
+model HouseholdMembership {
+  id          String    @id @default(cuid())
+  householdId String
+  userId      String
+  role        String    @default("member")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+}
+
+model Platform {
+  id              String           @id
+  name            String
+  shortName       String
+  releaseEra      String
+  libraryEntries  LibraryEntry[]
+  recommendations Recommendation[]
+}
+
+model Game {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  title           String
+  year            Int
+  metadata        GameMetadata?
+  libraryEntries  LibraryEntry[]
+  recommendations Recommendation[]
+}
+
+model GameMetadata {
+  id                     String @id @default(cuid())
+  gameId                 String @unique
+  gameFamily             String
+  franchise              String
+  estimatedHours         Int
+  completionLikelihood   String
+  mood                   String
+  duplicateOwnershipNote String?
+  game                   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model LibraryEntry {
+  id           String    @id @default(cuid())
+  householdId  String
+  userId       String
+  gameId       String
+  platformId   String
+  importSource String
+  playStatus   String
+  ownedDays    Int
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game         Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platform     Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId, platformId])
+}
+
+model Recommendation {
+  id          String                 @id @default(cuid())
+  householdId String
+  userId      String
+  gameId      String
+  platformId  String
+  score       Int
+  headline    String
+  household   Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game        Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platform    Platform               @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  reasons     RecommendationReason[]
+  createdAt   DateTime               @default(now())
+}
+
+model RecommendationReason {
+  id               String         @id @default(cuid())
+  recommendationId String
+  title            String
+  detail           String
+  sortOrder        Int            @default(0)
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+}
