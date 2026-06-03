@@ -123,6 +123,27 @@ The following deterministic placeholder services are defined in `lib/ai/agents.t
 
 They return stable, hard-coded responses based on the demo catalog so future issues can wire in real LLM calls without redesigning the interface.
 
+### Recommendation Scoring Engine
+
+`lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:
+
+- `score` (0-100)
+- `confidence` (0-100)
+- ranked `reasons`
+- per-factor `factors` breakdown
+
+Current weighted factors:
+
+- completion probability
+- backlog age
+- genre diversity
+- platform preference
+- session fit
+- ownership duplication
+- active rotation fit
+
+Factor weights are configuration-driven via `RecommendationScoringEngine` constructor options, and `lib/recommendations/scoring.test.ts` covers deterministic behavior, explainability, weight overrides, and supported platform scoring.
+
 ## App Routes
 
 - `/` — landing / welcome

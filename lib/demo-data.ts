@@ -13,6 +13,11 @@ import type {
   Tag,
   User,
 } from "@/lib/domain/types";
+import {
+  RecommendationScoringEngine,
+  type RecommendationScore,
+  type ScoringCandidate,
+} from "@/lib/recommendations/scoring";
 
 export const demoHousehold: Household = {
   id: "household-1",
@@ -551,36 +556,61 @@ export const demoLibraryEntries: LibraryEntry[] = [
   },
 ];
 
+const recommendationScoringEngine = new RecommendationScoringEngine();
+
+function getScoringCandidate(entry: LibraryEntry): ScoringCandidate {
+  return {
+    game: getGameById(entry.gameId),
+    metadata: getMetadataByGameId(entry.gameId),
+    libraryEntry: entry,
+    platformEntry: entry.platformEntryId
+      ? demoPlatformEntries.find((platformEntry) => platformEntry.id === entry.platformEntryId)
+      : undefined,
+  };
+}
+
+export const activeRotation = demoLibraryEntries
+  .filter((entry) => ["active", "next_up", "backlog"].includes(entry.playStatus));
+
+const activeRotationCandidates = demoLibraryEntries
+  .filter((entry) => ["active", "next_up"].includes(entry.playStatus))
+  .map(getScoringCandidate);
+
+export const demoRecommendationScores: Array<{
+  entry: LibraryEntry;
+  score: RecommendationScore;
+}> = demoLibraryEntries.map((entry) => ({
+  entry,
+  score: recommendationScoringEngine.score(getScoringCandidate(entry), {
+    preferredPlatforms: ["nintendo-switch", "psp", "steam", "psvita", "gba"],
+    targetSessionMinutes: 60,
+    activeRotation: activeRotationCandidates,
+    allLibraryEntries: demoLibraryEntries,
+  }),
+}));
+
+const topRecommendation = demoRecommendationScores
+  .slice()
+  .sort((left, right) => right.score.score - left.score.score)[0];
+
+if (!topRecommendation) {
+  throw new Error("Expected at least one demo recommendation candidate.");
+}
+
 export const demoRecommendation: Recommendation = {
   id: "recommendation-1",
-  householdId: demoHousehold.id,
-  userId: demoUsers[0].id,
-  gameId: "game-monster-hunter-rise",
-  platformId: "nintendo-switch",
-  score: 94,
-  headline: "A high-confidence pick with immediate momentum and a strong stop point.",
-  reasons: [
-    {
-      id: "reason-hours",
-      title: "23-hour main path",
-      detail: "Easy to progress in sessions while still meaningful for longer weekends.",
-    },
-    {
-      id: "reason-contrast",
-      title: "Action-forward pacing",
-      detail: "A tonal reset from long narrative-heavy RPG sessions.",
-    },
-    {
-      id: "reason-owned",
-      title: "Owned 820 days",
-      detail: "Long enough in the library to justify resurfacing tonight.",
-    },
-  ],
+  householdId: topRecommendation.entry.householdId,
+  userId: topRecommendation.entry.userId,
+  gameId: topRecommendation.entry.gameId,
+  platformId: topRecommendation.entry.platformId,
+  score: Math.round(topRecommendation.score.score),
+  headline: `Scored ${Math.round(topRecommendation.score.score)} with ${Math.round(topRecommendation.score.confidence)} confidence based on weighted recommendation factors.`,
+  reasons: topRecommendation.score.reasons.map((reason, index) => ({
+    id: `reason-${index + 1}`,
+    title: reason,
+    detail: `Factor-based rationale generated deterministically by the recommendation scoring engine.`,
+  })),
 };
-
-export const activeRotation = demoLibraryEntries.filter((entry) =>
-  ["active", "next_up", "backlog"].includes(entry.playStatus),
-);
 
 function findByIdOrThrow<T>(
   collection: T[],
