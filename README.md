@@ -140,6 +140,32 @@ Endpoints:
 - `DELETE /api/library/games/:id?userId=:userId`
 - `GET /api/library/stats?userId=:userId`
 
+### Steam Authentication and Account Linking
+
+Steam account linking is implemented with OpenID-based identity verification and account management services under `lib/steam`.
+
+- `SteamAuthProvider` creates OpenID login redirects and validates callback responses.
+- `SteamIdentityService` fetches and normalizes Steam profile data (`steamId`, display name, avatar URL, profile URL).
+- `SteamAccountService` links, reconnects, unlinks, and reports connected account status.
+
+Routes:
+
+- `GET /auth/steam?userId=:userId` — begin Steam OpenID flow
+- `GET /auth/steam/callback` — validate OpenID callback and link account
+- `GET /accounts/steam?userId=:userId` — connected account status
+- `DELETE /accounts/steam?userId=:userId[&steamId=:steamId]` — unlink account
+
+Security protections in the auth flow include:
+
+- CSRF/state validation with one-time state records
+- Session cookie validation (`steam_link_session`)
+- OpenID response verification (`check_authentication`)
+- Replay protection using tracked OpenID response nonces
+
+UI support:
+
+- `/settings` now includes a **Connected accounts** section with Steam status, avatar, profile link, and disconnect action.
+
 ### Recommendation Scoring Engine
 
 `lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:

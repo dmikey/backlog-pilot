@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { Panel } from "@/components/panel";
+import { SteamConnectedAccountCard } from "@/components/steam-connected-account-card";
 import { aiArchitectureNotes } from "@/lib/ai/agents";
 
 const settingsSections = [
@@ -37,21 +38,30 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        <Panel className="space-y-4">
-          <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
-            AI architecture notes
-          </p>
-          <div className="space-y-3">
-            {aiArchitectureNotes.map((note) => (
-              <div
-                key={note}
-                className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4 text-sm leading-6 text-zinc-300"
-              >
-                {note}
-              </div>
-            ))}
-          </div>
-        </Panel>
+        <div className="space-y-6">
+          <Panel className="space-y-4">
+            <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
+              Connected accounts
+            </p>
+            <SteamConnectedAccountCard />
+          </Panel>
+
+          <Panel className="space-y-4">
+            <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
+              AI architecture notes
+            </p>
+            <div className="space-y-3">
+              {aiArchitectureNotes.map((note) => (
+                <div
+                  key={note}
+                  className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4 text-sm leading-6 text-zinc-300"
+                >
+                  {note}
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
       </div>
     </AppShell>
   );
