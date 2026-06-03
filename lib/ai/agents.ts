@@ -2,10 +2,12 @@ import {
   demoLibraryEntries,
   demoRecommendation,
   getFranchiseById,
+  demoGames,
   getGameById,
   getMetadataByGameId,
   getPlatformById,
 } from "@/lib/demo-data";
+import { buildDemoDuplicateInsights } from "@/lib/duplicates/demo-insights";
 import type { Recommendation } from "@/lib/domain/types";
 
 export interface AgentResponse {
@@ -50,6 +52,29 @@ export const backlogCoachAgent: BacklogCoachAgent = {
 
 export const purchaseAdvisorAgent: PurchaseAdvisorAgent = {
   async evaluateProspectivePurchase(gameTitle) {
+    const duplicates = buildDemoDuplicateInsights();
+    const candidate = demoGames.find(
+      (game) =>
+        game.canonicalTitle.toLowerCase() === gameTitle.toLowerCase() ||
+        game.aliases.some((alias) => alias.toLowerCase() === gameTitle.toLowerCase()),
+    );
+    const duplicateGroup = candidate
+      ? duplicates.groups.find((group) => group.relatedCanonicalGameIds.includes(candidate.id))
+      : undefined;
+
+    if (duplicateGroup) {
+      const platforms = duplicateGroup.platforms.map((platform) => getPlatformById(platform).shortName);
+      return {
+        title: `Skip buying ${gameTitle}`,
+        summary: `Already owned on ${duplicateGroup.duplicateCount} platform(s). Recommended platform: ${getPlatformById(duplicateGroup.preferredPlatform).name}.`,
+        bullets: [
+          `Owned platforms: ${platforms.join(", ")}.`,
+          `Duplicate score: ${duplicateGroup.duplicateScore}.`,
+          "Purchase Advisor signal: skip this purchase and play the preferred platform copy first.",
+        ],
+      };
+    }
+
     return {
       title: `Hold off on buying ${gameTitle}`,
       summary:
