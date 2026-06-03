@@ -41,8 +41,8 @@ export interface OwnershipRecord {
 }
 
 export interface CanonicalGameResolver {
-  getGameById(canonicalGameId: string): Game;
-  getMetadataByGameId(canonicalGameId: string): GameMetadata;
+  getGameById(canonicalGameId: string): Game | undefined;
+  getMetadataByGameId(canonicalGameId: string): GameMetadata | undefined;
 }
 
 export interface LibraryGameWithOwnership {

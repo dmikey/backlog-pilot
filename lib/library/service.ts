@@ -29,8 +29,20 @@ export class UserLibraryService {
   constructor(
     private readonly repositories: LibraryRepositorySet = createInMemoryLibraryRepository(),
     private readonly canonicalResolver: CanonicalGameResolver = {
-      getGameById,
-      getMetadataByGameId,
+      getGameById(canonicalGameId) {
+        try {
+          return getGameById(canonicalGameId);
+        } catch {
+          return undefined;
+        }
+      },
+      getMetadataByGameId(canonicalGameId) {
+        try {
+          return getMetadataByGameId(canonicalGameId);
+        } catch {
+          return undefined;
+        }
+      },
     },
   ) {}
 
@@ -66,7 +78,7 @@ export class UserLibraryService {
     }
 
     this.assertCanonicalGameExists(input.canonicalGameId);
-    this.createLibrary(input.userId);
+    this.ensureLibraryExists(input.userId);
 
     const now = new Date().toISOString();
     const status = input.status ?? "Unplayed";
@@ -95,13 +107,33 @@ export class UserLibraryService {
       });
 
     if (existingGame) {
-      this.repositories.games.update(existingGame.id, {
-        status: input.status ?? existingGame.status,
-        rating: input.rating ?? existingGame.rating,
-        notes: input.notes ?? existingGame.notes,
-        playtimeHours: input.playtimeHours ?? existingGame.playtimeHours,
-        metadata: input.metadata ?? existingGame.metadata,
-      });
+      const updates: Partial<LibraryGame> = {};
+
+      if ("status" in input && input.status !== undefined) {
+        updates.status = input.status;
+      }
+
+      if ("rating" in input) {
+        updates.rating = input.rating;
+      }
+
+      if ("notes" in input) {
+        updates.notes = input.notes;
+      }
+
+      if ("playtimeHours" in input && input.playtimeHours !== undefined) {
+        updates.playtimeHours = input.playtimeHours;
+      }
+
+      if ("metadata" in input) {
+        updates.metadata = input.metadata;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        this.repositories.games.update(existingGame.id, {
+          ...updates,
+        });
+      }
     }
 
     const existingOwnership = this.repositories.ownership
@@ -124,7 +156,7 @@ export class UserLibraryService {
       });
     }
 
-    return this.getGameWithOwnershipOrThrow(existingGame?.id ?? game.id);
+    return this.getGameWithOwnershipOrThrow(game.id);
   }
 
   removeGame(userId: string, gameId: string): void {
@@ -273,6 +305,12 @@ export class UserLibraryService {
     const canonicalGame = this.canonicalResolver.getGameById(game.canonicalGameId);
     const canonicalMetadata = this.canonicalResolver.getMetadataByGameId(game.canonicalGameId);
 
+    if (!canonicalGame || !canonicalMetadata) {
+      throw new LibraryValidationError(
+        `canonicalGameId validation failed: Missing canonical model for ${game.canonicalGameId}.`,
+      );
+    }
+
     return {
       game,
       ownershipRecords,
@@ -283,15 +321,25 @@ export class UserLibraryService {
 
   private assertCanonicalGameExists(canonicalGameId: string) {
     try {
-      this.canonicalResolver.getGameById(canonicalGameId);
-      this.canonicalResolver.getMetadataByGameId(canonicalGameId);
+      const game = this.canonicalResolver.getGameById(canonicalGameId);
+      const metadata = this.canonicalResolver.getMetadataByGameId(canonicalGameId);
+
+      if (!game || !metadata) {
+        throw new LibraryValidationError(
+          `canonicalGameId validation failed: Missing canonical model for ${canonicalGameId}.`,
+        );
+      }
     } catch (error) {
-      if (error instanceof Error) {
-        throw new LibraryValidationError(`canonicalGameId validation failed: ${error.message}`);
+      if (error instanceof LibraryValidationError) {
+        throw error;
       }
 
-      throw error;
+      throw new LibraryValidationError(`canonicalGameId validation failed: ${canonicalGameId}.`);
     }
+  }
+
+  private ensureLibraryExists(userId: string) {
+    return this.getLibrary(userId) ?? this.createLibrary(userId);
   }
 }
 
@@ -311,7 +359,7 @@ function assertSupportedPlatform(platform: SupportedLibraryPlatform) {
 
 function assertValidRating(rating: number) {
   if (!Number.isFinite(rating) || rating < 0 || rating > 10) {
-    throw new LibraryValidationError("rating must be a number between 0 and 10.");
+    throw new LibraryValidationError("rating must be a number between 0 and 10 (inclusive).");
   }
 }
 
