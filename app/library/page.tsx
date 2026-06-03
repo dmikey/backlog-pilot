@@ -1,14 +1,16 @@
 import { AppShell } from "@/components/app-shell";
 import { Panel } from "@/components/panel";
 import {
-  demoGameMetadata,
   demoLibraryEntries,
   demoUsers,
   getGameById,
   getPlatformById,
 } from "@/lib/demo-data";
+import { buildDemoDuplicateInsights } from "@/lib/duplicates/demo-insights";
 
 export default function LibraryPage() {
+  const duplicateInsights = buildDemoDuplicateInsights();
+
   return (
     <AppShell
       activeRoute="/library"
@@ -55,28 +57,32 @@ export default function LibraryPage() {
               Collection intelligence
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-white">
-              Duplicate-aware metadata
+              Duplicate ownership view
             </h2>
           </div>
           <div className="space-y-3">
-            {demoGameMetadata.map((metadata) => (
+            {duplicateInsights.groups.map((group) => (
               <div
-                key={metadata.gameId}
+                key={group.canonicalGameId}
                 className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4"
               >
                 <p className="font-medium text-white">
-                  {getGameById(metadata.gameId).canonicalTitle}
+                  {group.canonicalTitle}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
-                  {metadata.mood}
+                  You own this on {group.duplicateCount} platform{group.duplicateCount === 1 ? "" : "s"}.
                 </p>
-                {metadata.duplicateOwnershipNote ? (
-                  <p className="mt-2 text-sm text-indigo-200">
-                    {metadata.duplicateOwnershipNote}
-                  </p>
-                ) : null}
+                <p className="mt-2 text-sm text-indigo-200">
+                  Recommended platform: {getPlatformById(group.preferredPlatform).name}.
+                </p>
+                <p className="mt-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+                  Duplicate score: {group.duplicateScore}
+                </p>
               </div>
             ))}
+            <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-4 text-sm text-zinc-400">
+              Duplicate ownership rate: {duplicateInsights.summary.duplicateOwnershipPercentage}%
+            </div>
           </div>
         </Panel>
       </div>

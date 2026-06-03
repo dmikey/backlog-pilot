@@ -140,6 +140,21 @@ Endpoints:
 - `DELETE /api/library/games/:id?userId=:userId`
 - `GET /api/library/stats?userId=:userId`
 
+### Duplicate Ownership Detection Engine
+
+`lib/duplicates` adds duplicate ownership detection across canonical games, remasters/definitive editions, and collection bundles.
+
+- `DuplicateOwnershipService` identifies duplicate groups and exposes purchase/recommendation signals.
+- `OwnershipGroupService` groups ownership records while preserving platform-specific records.
+- `DuplicateAnalysisEngine` generates severity scoring and dashboard summary analytics.
+
+Endpoints:
+
+- `GET /api/duplicates?userId=:userId[&preferredPlatforms=platform-a,platform-b]`
+- `GET /api/duplicates/groups?userId=:userId[&preferredPlatforms=platform-a,platform-b]`
+- `GET /api/duplicates/summary?userId=:userId[&preferredPlatforms=platform-a,platform-b]`
+- `GET /api/duplicates/:gameId?userId=:userId[&preferredPlatforms=platform-a,platform-b]`
+
 ### Steam Authentication and Account Linking
 
 Steam account linking is implemented with OpenID-based identity verification and account management services under `lib/steam`.
