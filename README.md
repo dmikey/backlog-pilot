@@ -123,6 +123,23 @@ The following deterministic placeholder services are defined in `lib/ai/agents.t
 
 They return stable, hard-coded responses based on the demo catalog so future issues can wire in real LLM calls without redesigning the interface.
 
+### User Library Service
+
+`lib/library/service.ts` provides the user library system of record with repository abstractions and API routes under `app/api/library`.
+
+- Supports Steam, Nintendo Switch, GBA, PSP, and PSVita ownership records
+- Stores canonical game references plus ownership/status/rating/notes/playtime metadata
+- Integrates canonical game + metadata validation via the existing domain model (`lib/demo-data.ts` getters)
+
+Endpoints:
+
+- `GET /api/library?userId=:userId`
+- `GET /api/library/games?userId=:userId[&status=:status][&platform=:platform][&q=:search]`
+- `POST /api/library/games`
+- `PATCH /api/library/games/:id?userId=:userId`
+- `DELETE /api/library/games/:id?userId=:userId`
+- `GET /api/library/stats?userId=:userId`
+
 ### Recommendation Scoring Engine
 
 `lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:
