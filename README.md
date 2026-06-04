@@ -261,6 +261,41 @@ Analytics tracked:
 - recommendation rejection
 - recommendation completion outcomes
 
+### Recommendation API Service
+
+`lib/recommendations` now exposes a dedicated API-facing recommendation layer built from:
+
+- `RecommendationApiService` (request orchestration + scenario defaults)
+- `RecommendationQueryService` (library/metadata/scoring/franchise + duplicate signals)
+- `RecommendationResponseBuilder` (typed response contracts + explanation output)
+
+Response contract includes:
+
+- primary recommendation + alternatives
+- score + confidence
+- reasons + factor breakdown
+- estimated completion hours
+- deterministic ranking output with pagination metadata
+
+Endpoints:
+
+- `GET /api/recommendations?userId=:userId[&type=:type][&platform=:platform][&genre=:genre][&franchise=:franchiseId][&status=:statusCsv][&ownershipType=:ownershipType][&minEstimatedHours=:hours][&maxEstimatedHours=:hours][&targetSessionMinutes=:minutes][&page=:page][&pageSize=:pageSize]`
+- `POST /api/recommendations/query`
+- `GET /api/recommendations/play-tonight?userId=:userId`
+- `GET /api/recommendations/franchise?userId=:userId[&franchise=:franchiseId]`
+- `GET /api/recommendations/backlog?userId=:userId`
+- `GET /api/recommendations/short-session?userId=:userId`
+- `GET /api/recommendations/long-session?userId=:userId`
+
+Supported request types:
+
+- `play-tonight`
+- `continue-franchise`
+- `short-session`
+- `long-session`
+- `backlog-reduction`
+- `custom`
+
 ### Franchise Completion Tracking Engine
 
 `lib/franchises` adds franchise and series-aware completion tracking on top of the canonical catalog and user library services.
