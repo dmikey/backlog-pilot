@@ -1,6 +1,23 @@
 import type { Game, GameMetadata } from "@/lib/domain/types";
 
-export const supportedLibraryPlatforms = ["steam", "nintendo-switch", "gba", "psp", "psvita"] as const;
+export const supportedLibraryPlatforms = [
+  "steam",
+  "nintendo-switch",
+  "gba",
+  "psp",
+  "psvita",
+  "nes",
+  "snes",
+  "genesis",
+  "game-boy",
+  "game-boy-color",
+  "n64",
+  "ps1",
+  "ps2",
+  "nds",
+  "dreamcast",
+  "arcade",
+] as const;
 
 export const gameStatuses = ["Unplayed", "Active", "Completed", "Abandoned", "Archived"] as const;
 

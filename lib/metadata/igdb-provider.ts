@@ -13,6 +13,17 @@ const supportedPlatformMap: Record<number, PlatformId> = {
   24: "gba",
   38: "psp",
   46: "psvita",
+  18: "nes",
+  19: "snes",
+  29: "genesis",
+  33: "game-boy",
+  41: "game-boy-color",
+  4: "n64",
+  7: "ps1",
+  8: "ps2",
+  20: "nds",
+  23: "dreamcast",
+  52: "arcade",
 };
 
 interface IgdbHttpConfig {

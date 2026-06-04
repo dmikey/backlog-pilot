@@ -560,7 +560,7 @@ function toImportSource(platform: SupportedLibraryPlatform) {
     case "nintendo-switch":
       return "nintendo_switch" as const;
     default:
-      return platform;
+      return platform as Exclude<SupportedLibraryPlatform, "nintendo-switch">;
   }
 }
 

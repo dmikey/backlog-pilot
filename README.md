@@ -409,13 +409,70 @@ The normalization pipeline enriches canonical `Game` + `GameMetadata` records wi
 - release date
 - developers and publishers
 - cover art and screenshot URLs (reference-only; no asset downloads)
-- supported platform mappings (Steam, Nintendo Switch, GBA, PSP, PSVita)
+- supported platform mappings (Steam, Nintendo Switch, GBA, PSP, PSVita, NES, SNES, Genesis, Game Boy, Game Boy Color, N64, PS1, PS2, NDS, Dreamcast, Arcade)
 
 Caching behavior:
 
 - Avoids repeated provider calls within a configurable TTL.
 - Tracks refresh timestamps in cache records.
 - Supports forced refresh (`forceRefresh: true`) for workflow reruns.
+
+### RetroAchievements Integration
+
+`lib/retroachievements` implements achievement, mastery, and completion tracking for retro gaming platforms via [RetroAchievements](https://retroachievements.org/).
+
+Authentication:
+
+- Credentials are loaded from `RETROACHIEVEMENTS_USERNAME` and `RETROACHIEVEMENTS_API_KEY` environment variables.
+- API calls use query parameters `z` (username) and `y` (API key) per the RetroAchievements v1 API.
+
+Components:
+
+- `RetroAchievementsProvider` — API client:
+  - `getUserProfile(username)` — fetches points, rank, and activity counts.
+  - `getUserCompletionProgress(username)` — paginates all game progress (standard + hardcore unlocks).
+  - Normalizes API responses and caps unlocked counts at total to handle API inconsistencies.
+- `RetroMasteryEngine` — platform mapping and signal generation:
+  - `toPlatform(consoleId)` — maps RetroAchievements console IDs to internal `SupportedLibraryPlatform` values.
+  - `toRetroProgressSignals(progress)` — calculates `retroCompletionPercentage`, `hardcoreCompletionPercentage`, `masteryOpportunityScore`, and `retroEngagementScore`. Hardcore completions receive 1.5× weighting.
+  - Delegates mastery status and recommendation signals to the shared `CompletionSignalEngine`.
+- `RetroAchievementService` — orchestration layer:
+  - `syncUser(userId, raUsername)` — fetches RA progress, maps to canonical games, upserts via `AchievementService`.
+  - `getProgress(userId)` — returns enriched per-game progress including retro-specific metadata.
+  - `getMastered(userId)` — mastered retro games only (delegates to `AchievementService`).
+  - `getNearCompletion(userId)` — 85–99% retro games only.
+  - `getAnalytics(userId)` — analytics summary scoped to retro platforms.
+
+Supported platforms (initial):
+
+| Platform | RA Console ID |
+|---|---|
+| NES | 7 |
+| SNES | 3 |
+| Game Boy | 4 |
+| Game Boy Color | 6 |
+| Game Boy Advance | 5 |
+| N64 | 2 |
+| Genesis / Mega Drive | 1 |
+| PlayStation | 12 |
+| PlayStation 2 | 21 |
+| Nintendo DS | 18 |
+| PSP | 41 |
+| Dreamcast | 40 |
+
+Recommendation integration:
+
+- Synced retro achievement progress flows into the shared `AchievementService`.
+- `CompletionSignalEngine` generates `nearCompletionBonus`, `masteryOpportunityBonus`, and `achievementMomentumBonus` from retro progress, identical to Steam achievement signals.
+- Retro completion signals feed the recommendation engine, Play Tonight, and Backlog Coach.
+
+API endpoints:
+
+- `GET /api/retroachievements/profile?userId=:userId&raUsername=:raUsername` — sync and return RA profile.
+- `GET /api/retroachievements/progress?userId=:userId` — full progress list with analytics.
+- `GET /api/retroachievements/mastered?userId=:userId` — mastered retro games.
+- `GET /api/retroachievements/near-completion?userId=:userId` — near-completion opportunities.
+- `GET /api/retroachievements/:gameId?userId=:userId` — per-game progress detail.
 
 ## App Routes
 

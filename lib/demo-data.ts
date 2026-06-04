@@ -51,6 +51,17 @@ export const demoPlatforms: Platform[] = [
   { id: "gba", name: "Game Boy Advance", shortName: "GBA", releaseEra: "retro" },
   { id: "psp", name: "PlayStation Portable", shortName: "PSP", releaseEra: "retro" },
   { id: "psvita", name: "PlayStation Vita", shortName: "PSVita", releaseEra: "retro" },
+  { id: "nes", name: "Nintendo Entertainment System", shortName: "NES", releaseEra: "retro" },
+  { id: "snes", name: "Super Nintendo Entertainment System", shortName: "SNES", releaseEra: "retro" },
+  { id: "genesis", name: "Sega Genesis", shortName: "Genesis", releaseEra: "retro" },
+  { id: "game-boy", name: "Game Boy", shortName: "GB", releaseEra: "retro" },
+  { id: "game-boy-color", name: "Game Boy Color", shortName: "GBC", releaseEra: "retro" },
+  { id: "n64", name: "Nintendo 64", shortName: "N64", releaseEra: "retro" },
+  { id: "ps1", name: "PlayStation", shortName: "PS1", releaseEra: "retro" },
+  { id: "ps2", name: "PlayStation 2", shortName: "PS2", releaseEra: "retro" },
+  { id: "nds", name: "Nintendo DS", shortName: "NDS", releaseEra: "retro" },
+  { id: "dreamcast", name: "Dreamcast", shortName: "DC", releaseEra: "retro" },
+  { id: "arcade", name: "Arcade", shortName: "Arcade", releaseEra: "retro" },
 ];
 
 export const demoImportSources: ImportSourceDefinition[] = [
@@ -83,6 +94,12 @@ export const demoImportSources: ImportSourceDefinition[] = [
     label: "PSVita",
     platformId: "psvita",
     firstRunCopy: "Support duplicates, remasters, and physical ownership later.",
+  },
+  {
+    id: "retroachievements",
+    label: "RetroAchievements",
+    platformId: "gba",
+    firstRunCopy: "Import achievement progress from RetroAchievements across all supported retro platforms.",
   },
 ];
 

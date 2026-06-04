@@ -438,7 +438,7 @@ function toImportSource(platform: SupportedLibraryPlatform): ImportSource {
     return "nintendo_switch";
   }
 
-  return platform;
+  return platform as Exclude<SupportedLibraryPlatform, "nintendo-switch">;
 }
 
 function toOwnedDays(acquiredAt?: string) {
