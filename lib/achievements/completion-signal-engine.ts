@@ -5,6 +5,8 @@ import type {
   RecommendationAchievementSignal,
 } from "@/lib/achievements/types";
 
+const MASTERY_ACHIEVEMENT_THRESHOLD = 50;
+
 export class CompletionSignalEngine {
   toCompletionPercentage(totalAchievements: number, unlockedAchievements: number) {
     if (totalAchievements <= 0) {
@@ -20,7 +22,7 @@ export class CompletionSignalEngine {
     }
 
     if (completionPercentage >= 100) {
-      return totalAchievements >= 50 ? "Mastered" : "Completed";
+      return totalAchievements >= MASTERY_ACHIEVEMENT_THRESHOLD ? "Mastered" : "Completed";
     }
 
     if (completionPercentage >= 85) {

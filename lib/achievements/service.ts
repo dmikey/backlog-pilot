@@ -28,7 +28,7 @@ export class AchievementService {
 
   constructor(private readonly signalEngine = new CompletionSignalEngine()) {}
 
-  upsertProgress(input: UpsertAchievementProgressInput[]): AchievementProgress[] {
+  async upsertProgress(input: UpsertAchievementProgressInput[]): Promise<AchievementProgress[]> {
     const updated: AchievementProgress[] = [];
 
     for (const entry of input) {
@@ -101,9 +101,16 @@ export class AchievementService {
     const completionByGameId = new Map(this.getCompletionSignals(userId).map((entry) => [entry.canonicalGameId, entry]));
 
     return this.listForUser(userId)
-      .map((entry) =>
-        this.signalEngine.toRecommendationSignal(entry, completionByGameId.get(entry.canonicalGameId)!),
-      )
+      .map((entry) => {
+        const completionSignal = completionByGameId.get(entry.canonicalGameId);
+
+        if (!completionSignal) {
+          return undefined;
+        }
+
+        return this.signalEngine.toRecommendationSignal(entry, completionSignal);
+      })
+      .filter((entry): entry is RecommendationAchievementSignal => Boolean(entry))
       .sort((left, right) => right.completionPercentage - left.completionPercentage);
   }
 

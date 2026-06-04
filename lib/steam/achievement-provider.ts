@@ -28,6 +28,8 @@ interface SteamPlayerAchievementsResponse {
   };
 }
 
+const ACHIEVEMENT_UNLOCKED = 1;
+
 export class SteamAchievementProvider {
   private readonly fetchImpl: typeof fetch;
 
@@ -116,7 +118,9 @@ export class SteamAchievementProvider {
       return undefined;
     }
 
-    const unlocked = (playerStats.achievements ?? []).filter((entry) => entry.achieved === 1).length;
+    const unlocked = (playerStats.achievements ?? []).filter(
+      (entry) => entry.achieved === ACHIEVEMENT_UNLOCKED,
+    ).length;
     return Math.min(unlocked, totalAchievements);
   }
 }

@@ -308,7 +308,7 @@ export class SteamSyncService {
         });
       }
 
-      this.dependencies.achievementService.upsertProgress(progressUpdates);
+      await this.dependencies.achievementService.upsertProgress(progressUpdates);
     } catch {
       // Achievement import is intentionally optional; sync should still complete when unavailable.
     }

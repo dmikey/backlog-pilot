@@ -3,10 +3,10 @@ import test from "node:test";
 
 import { AchievementService } from "@/lib/achievements/service";
 
-test("AchievementService stores progress, classifies mastery, and emits analytics/signals", () => {
+test("AchievementService stores progress, classifies mastery, and emits analytics/signals", async () => {
   const service = new AchievementService();
 
-  service.upsertProgress([
+  await service.upsertProgress([
     {
       userId: "user-1",
       canonicalGameId: "game-persona-4-golden",
