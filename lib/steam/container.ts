@@ -8,6 +8,11 @@ import { createInMemorySteamRepository } from "@/lib/steam/repository";
 import { SteamSyncJob } from "@/lib/steam/sync-job";
 import { SteamSyncService } from "@/lib/steam/sync-service";
 import { getUserLibraryService } from "@/lib/library/container";
+import { SteamActivityProvider } from "@/lib/activity/steam-activity-provider";
+import {
+  getSteamActivityService,
+  resetSteamActivityServiceForTests,
+} from "@/lib/activity/container";
 
 interface SteamServiceSet {
   accountService: SteamAccountService;
@@ -34,6 +39,7 @@ export function resetSteamServicesForTests(overrides?: {
   identityFetchImpl?: typeof fetch;
   collectionFetchImpl?: typeof fetch;
 }) {
+  resetSteamActivityServiceForTests();
   services = createServices(overrides);
 }
 
@@ -49,10 +55,13 @@ function createServices(overrides?: {
     config,
     fetchImpl: overrides?.collectionFetchImpl,
   });
+  const activityProvider = new SteamActivityProvider(collectionProvider);
   const gameMatcher = new SteamGameMatcher();
   const syncService = new SteamSyncService({
     accountService,
     collectionProvider,
+    activityProvider,
+    activityService: getSteamActivityService(),
     matcher: gameMatcher,
     libraryService: getUserLibraryService(),
     syncStatusRepository: repositories.syncStatuses,

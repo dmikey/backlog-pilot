@@ -1,4 +1,6 @@
 import type { UserLibraryService } from "@/lib/library/service";
+import type { SteamActivityProvider } from "@/lib/activity/steam-activity-provider";
+import type { SteamActivityService } from "@/lib/activity/service";
 import type { SteamAccountService } from "@/lib/steam/account-service";
 import type { SteamCollectionProvider } from "@/lib/steam/collection-provider";
 import type { SteamGameMatcher } from "@/lib/steam/game-matcher";
@@ -16,6 +18,8 @@ import { SteamValidationError } from "@/lib/steam/types";
 interface SteamSyncServiceDependencies {
   accountService: SteamAccountService;
   collectionProvider: SteamCollectionProvider;
+  activityProvider: SteamActivityProvider;
+  activityService: SteamActivityService;
   matcher: SteamGameMatcher;
   libraryService: UserLibraryService;
   syncStatusRepository: SteamSyncStatusRepository;
@@ -69,6 +73,12 @@ export class SteamSyncService {
 
       const seenAppIds = new Set<string>();
       const unmatched: UnmatchedSteamGame[] = [];
+      const activitySnapshotsByAppId = new Map(
+        (
+          await this.dependencies.activityProvider.getPlaytimeSnapshots(steamId)
+        ).map((snapshot) => [snapshot.platformGameId, snapshot]),
+      );
+      const activityUpdates: Parameters<SteamActivityService["upsertActivities"]>[0] = [];
 
       let gamesMatched = 0;
       let newAcquisitions = 0;
@@ -96,6 +106,12 @@ export class SteamSyncService {
         }
 
         const playtimeHours = convertPlaytimeMinutesToHours(game.totalPlaytimeMinutes);
+        const snapshot = activitySnapshotsByAppId.get(appId) ?? {
+          platformGameId: appId,
+          totalPlaytimeMinutes: game.totalPlaytimeMinutes,
+          recentPlaytimeMinutes: game.recentPlaytimeMinutes,
+          lastPlayedAt: game.lastPlayedAt,
+        };
         const nextStatus = playtimeHours > 0 ? "Active" : "Unplayed";
         const previousPlaytimeHours = existing?.game.playtimeHours ?? 0;
         const previousLastPlayedAt = getExistingLastPlayedAt(existing?.game.metadata);
@@ -118,6 +134,15 @@ export class SteamSyncService {
         if (existing && (previousPlaytimeHours !== playtimeHours || lastPlayedChanged)) {
           updatedGames += 1;
         }
+
+        activityUpdates.push({
+          userId,
+          canonicalGameId: match.game.id,
+          platform: "steam",
+          totalPlaytimeMinutes: snapshot.totalPlaytimeMinutes,
+          recentPlaytimeMinutes: snapshot.recentPlaytimeMinutes,
+          lastPlayedAt: snapshot.lastPlayedAt,
+        });
       }
 
       let removedTitles = 0;
@@ -137,6 +162,7 @@ export class SteamSyncService {
       }
 
       this.dependencies.unmatchedRepository.replaceByUserId(userId, unmatched);
+      await this.dependencies.activityService.upsertActivities(activityUpdates);
 
       const completedAt = new Date().toISOString();
       const status = this.dependencies.syncStatusRepository.upsert({
@@ -244,6 +270,7 @@ function toSteamMetadata(game: SteamOwnedGame, syncedAt: string) {
       appId: game.appId,
       title: game.title,
       totalPlaytimeMinutes: game.totalPlaytimeMinutes,
+      recentPlaytimeMinutes: game.recentPlaytimeMinutes,
       lastPlayedAt: game.lastPlayedAt,
       icon: game.icon,
       logo: game.logo,

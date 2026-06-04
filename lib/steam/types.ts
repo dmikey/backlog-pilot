@@ -25,6 +25,7 @@ export interface SteamOwnedGame {
   appId: number;
   title: string;
   totalPlaytimeMinutes: number;
+  recentPlaytimeMinutes: number;
   lastPlayedAt?: string;
   icon?: string;
   logo?: string;

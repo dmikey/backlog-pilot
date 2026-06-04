@@ -2,6 +2,8 @@ import { demoLibraryEntries, getGameById, getMetadataByGameId } from "@/lib/demo
 import type { ImportSource } from "@/lib/domain/types";
 import { DuplicateOwnershipService } from "@/lib/duplicates/duplicate-ownership-service";
 import { FranchiseRecommendationSignals } from "@/lib/franchises/recommendation-signals";
+import { getSteamActivityService } from "@/lib/activity/container";
+import type { SteamActivityService } from "@/lib/activity/service";
 import type {
   LibraryGameWithOwnership,
   SupportedLibraryPlatform,
@@ -20,13 +22,17 @@ import type {
 import type { RecommendationExplanationInput } from "@/lib/recommendations/explanations";
 
 const defaultOwnedDays = 365;
+const maxRecommendationReasons = 5;
 
 export class RecommendationQueryService {
   private readonly scoringEngine = new RecommendationScoringEngine();
   private readonly duplicateService: DuplicateOwnershipService;
   private readonly franchiseSignalsService: FranchiseRecommendationSignals;
 
-  constructor(private readonly libraryService: UserLibraryService) {
+  constructor(
+    private readonly libraryService: UserLibraryService,
+    private readonly activityService: SteamActivityService = getSteamActivityService(),
+  ) {
     this.duplicateService = new DuplicateOwnershipService(libraryService);
     this.franchiseSignalsService = new FranchiseRecommendationSignals(libraryService);
   }
@@ -73,6 +79,11 @@ export class RecommendationQueryService {
         .listForUser(input.userId)
         .map((signal) => [signal.franchiseId, signal]),
     );
+    const activitySignals = new Map(
+      this.activityService
+        .getRecommendationSignals(input.userId)
+        .map((signal) => [signal.canonicalGameId, signal]),
+    );
 
     return source
       .map((entry) => {
@@ -82,6 +93,7 @@ export class RecommendationQueryService {
         const franchiseSignal = candidate.game.franchiseId
           ? franchiseSignals.get(candidate.game.franchiseId)
           : undefined;
+        const activitySignal = activitySignals.get(candidate.game.id);
         const duplicateCount = allLibraryEntriesForContext.filter(
           (libraryEntry) => libraryEntry.gameId === candidate.game.id,
         ).length;
@@ -91,10 +103,25 @@ export class RecommendationQueryService {
           scored.score * (duplicateSignal?.penaltyMultiplier ?? 1) +
             (franchiseSignal?.nearFranchiseCompletionBonus ?? 0) * 8 +
             (franchiseSignal?.seriesContinuationBonus ?? 0) * 6 -
-            (franchiseSignal?.abandonedFranchisePenalty ?? 0) * 4,
+            (franchiseSignal?.abandonedFranchisePenalty ?? 0) * 4 +
+            (activitySignal?.recentlyPlayedBoost ?? 0) * 10 +
+            (activitySignal?.activeGameContinuationBonus ?? 0) * 8 +
+            (activitySignal?.dormantGameBoost ?? 0) * 5 -
+            (activitySignal?.abandonmentRiskScore ?? 0) * 6,
           0,
           100,
         );
+        const activityReason =
+          activitySignal?.classification === "Active"
+            ? "Recently played and strongly engaged, making continuation a high-confidence pick."
+            : activitySignal?.classification === "Dormant"
+              ? "Long-dormant title surfaced as a rotation revival candidate."
+              : activitySignal?.classification === "Abandoned"
+                ? "Low-engagement pattern suggests this title is lower current priority."
+                : undefined;
+        const reasons = activityReason
+          ? [activityReason, ...scored.reasons]
+          : scored.reasons.slice();
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,
@@ -104,7 +131,7 @@ export class RecommendationQueryService {
           score: roundToTwo(boostedScore),
           confidence: roundToFour(clamp(scored.confidence / 100, 0, 1)),
           estimatedCompletionHours: entry.canonicalMetadata.estimatedHours,
-          reasons: scored.reasons,
+          reasons: reasons.slice(0, maxRecommendationReasons),
           factors: scored.factors,
           explanationInput: this.toExplanationInput({
             entry,

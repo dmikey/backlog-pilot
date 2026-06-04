@@ -201,6 +201,27 @@ Routes:
 - `GET /steam/library?userId=:userId` — list Steam-only library with most-played / recently-played / never-played groupings
 - `POST /steam/sync/refresh` — user-triggered refresh sync
 
+### Steam Activity Intelligence
+
+`lib/activity` now captures behavior-level Steam play patterns and produces recommendation-ready engagement signals.
+
+- `SteamActivityProvider` normalizes Steam playtime snapshots (`totalPlaytimeMinutes`, `recentPlaytimeMinutes`, `lastPlayedAt`).
+- `SteamActivityService` stores per-game activity records and history, and exposes analytics summaries.
+- `SteamEngagementEngine` calculates engagement score, classifies activity (`Active`, `Recently Active`, `Dormant`, `Abandoned`, `Completed Candidate`), and emits recommendation signals:
+  - `recentlyPlayedBoost`
+  - `dormantGameBoost`
+  - `activeGameContinuationBonus`
+  - `abandonmentRiskScore`
+  - `engagementScore`
+
+Routes:
+
+- `GET /activity?userId=:userId` — full activity records + analytics + recommendation signals
+- `GET /activity/recent?userId=:userId` — recently played activity
+- `GET /activity/most-played?userId=:userId` — top playtime activity
+- `GET /activity/dormant?userId=:userId` — dormant/abandoned activity
+- `GET /activity/:gameId?userId=:userId` — single game activity record
+
 ### Recommendation Scoring Engine
 
 `lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:
@@ -267,6 +288,7 @@ Analytics tracked:
 
 - `RecommendationApiService` (request orchestration + scenario defaults)
 - `RecommendationQueryService` (library/metadata/scoring/franchise + duplicate signals)
+- `RecommendationQueryService` also applies activity signals from Steam engagement (`recentlyPlayedBoost`, continuation bonus, dormant revival boost, abandonment risk).
 - `RecommendationResponseBuilder` (typed response contracts + explanation output)
 - `RecommendationExplanationService` + `ExplanationTemplateEngine` + `ExplanationResponseBuilder` (deterministic explanation generation and structured UI-safe payloads)
 
