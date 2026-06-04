@@ -21,40 +21,8 @@ export interface RetroAchievementsConfig {
 }
 
 /**
- * RetroAchievements console IDs mapped to our internal platform IDs.
- * https://retroachievements.org/
- */
-export const retroAchievementsPlatformMap: Record<number, SupportedLibraryPlatform> = {
-  5: "game-boy",
-  6: "game-boy-color",
-  7: "snes",
-  9: "genesis",
-  11: "game-boy-color",
-  12: "ps1",
-  14: "nds",
-  16: "game-boy",
-  18: "nds",
-  21: "ps2",
-  23: "dreamcast",
-  24: "arcade",
-  27: "arcade",
-  29: "n64",
-  37: "arcade",
-  39: "snes",
-  40: "game-boy",
-  41: "nes",
-  44: "ps1",
-  47: "ps2",
-  56: "genesis",
-  67: "nes",
-  71: "psp",
-  78: "n64",
-  80: "arcade",
-};
-
-/**
- * RetroAchievements console IDs that map to GBA.
- * Console ID 5 is Game Boy Advance in the RA system.
+ * Canonical RetroAchievements console ID constants for all supported platforms.
+ * Source: https://retroachievements.org/
  */
 export const RA_CONSOLE_GBA = 5;
 export const RA_CONSOLE_GB = 4;

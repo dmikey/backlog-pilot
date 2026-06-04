@@ -199,7 +199,9 @@ function resolveCanonicalGameIdFromTitle(title: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 
   return `game-${slug}`;
 }
