@@ -3,10 +3,10 @@ import test from "node:test";
 
 import { SteamActivityService } from "@/lib/activity/service";
 
-test("SteamActivityService upserts history and returns analytics slices", () => {
+test("SteamActivityService upserts history and returns analytics slices", async () => {
   const service = new SteamActivityService();
 
-  service.upsertActivities([
+  await service.upsertActivities([
     {
       userId: "user-activity-1",
       canonicalGameId: "game-persona-4-golden",
@@ -25,7 +25,7 @@ test("SteamActivityService upserts history and returns analytics slices", () => 
     },
   ]);
 
-  service.upsertActivities([
+  await service.upsertActivities([
     {
       userId: "user-activity-1",
       canonicalGameId: "game-persona-4-golden",

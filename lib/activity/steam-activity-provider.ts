@@ -22,23 +22,9 @@ export class SteamActivityProvider {
   normalizeOwnedGame(game: SteamOwnedGame): SteamPlaytimeSnapshot {
     return {
       platformGameId: String(game.appId),
-      totalPlaytimeMinutes: Math.max(0, Math.floor(game.totalPlaytimeMinutes)),
-      recentPlaytimeMinutes: Math.max(0, Math.floor(game.recentPlaytimeMinutes)),
-      lastPlayedAt: normalizeTimestamp(game.lastPlayedAt),
+      totalPlaytimeMinutes: game.totalPlaytimeMinutes,
+      recentPlaytimeMinutes: game.recentPlaytimeMinutes,
+      lastPlayedAt: game.lastPlayedAt,
     };
   }
-}
-
-function normalizeTimestamp(value: string | undefined) {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsed = Date.parse(value);
-
-  if (!Number.isFinite(parsed)) {
-    return undefined;
-  }
-
-  return new Date(parsed).toISOString();
 }

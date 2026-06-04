@@ -31,7 +31,7 @@ export class SteamActivityService {
 
   constructor(private readonly engagementEngine = new SteamEngagementEngine()) {}
 
-  upsertActivities(input: UpsertGameActivityInput[]): GameActivity[] {
+  async upsertActivities(input: UpsertGameActivityInput[]): Promise<GameActivity[]> {
     const updated: GameActivity[] = [];
 
     for (const entry of input) {

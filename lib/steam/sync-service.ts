@@ -162,7 +162,7 @@ export class SteamSyncService {
       }
 
       this.dependencies.unmatchedRepository.replaceByUserId(userId, unmatched);
-      this.dependencies.activityService.upsertActivities(activityUpdates);
+      await this.dependencies.activityService.upsertActivities(activityUpdates);
 
       const completedAt = new Date().toISOString();
       const status = this.dependencies.syncStatusRepository.upsert({

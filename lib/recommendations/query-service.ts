@@ -22,6 +22,7 @@ import type {
 import type { RecommendationExplanationInput } from "@/lib/recommendations/explanations";
 
 const defaultOwnedDays = 365;
+const maxRecommendationReasons = 5;
 
 export class RecommendationQueryService {
   private readonly scoringEngine = new RecommendationScoringEngine();
@@ -110,15 +111,17 @@ export class RecommendationQueryService {
           0,
           100,
         );
-        const reasons = scored.reasons.slice();
-
-        if (activitySignal?.classification === "Active") {
-          reasons.unshift("Recently played and strongly engaged, making continuation a high-confidence pick.");
-        } else if (activitySignal?.classification === "Dormant") {
-          reasons.unshift("Long-dormant title surfaced as a rotation revival candidate.");
-        } else if (activitySignal?.classification === "Abandoned") {
-          reasons.unshift("Low-engagement pattern suggests this title is lower current priority.");
-        }
+        const activityReason =
+          activitySignal?.classification === "Active"
+            ? "Recently played and strongly engaged, making continuation a high-confidence pick."
+            : activitySignal?.classification === "Dormant"
+              ? "Long-dormant title surfaced as a rotation revival candidate."
+              : activitySignal?.classification === "Abandoned"
+                ? "Low-engagement pattern suggests this title is lower current priority."
+                : undefined;
+        const reasons = activityReason
+          ? [activityReason, ...scored.reasons]
+          : scored.reasons.slice();
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,
@@ -128,7 +131,7 @@ export class RecommendationQueryService {
           score: roundToTwo(boostedScore),
           confidence: roundToFour(clamp(scored.confidence / 100, 0, 1)),
           estimatedCompletionHours: entry.canonicalMetadata.estimatedHours,
-          reasons: reasons.slice(0, 5),
+          reasons: reasons.slice(0, maxRecommendationReasons),
           factors: scored.factors,
           explanationInput: this.toExplanationInput({
             entry,
