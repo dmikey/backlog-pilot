@@ -17,6 +17,11 @@ import {
   type RecommendationScoringContext,
   type ScoringCandidate,
 } from "@/lib/recommendations/scoring";
+import {
+  ExplanationResponseBuilder,
+  RecommendationExplanationService,
+  type RecommendationExplanationInput,
+} from "@/lib/recommendations/explanations";
 import type {
   PlayTonightAction,
   PlayTonightAnalyticsEvent,
@@ -67,12 +72,15 @@ interface RankedRecommendation {
   duplicatePenaltyMultiplier: number;
   estimatedCompletionHours: number;
   platformPreferenceMatched: boolean;
+  explanationInput: RecommendationExplanationInput;
 }
 
 export class PlayTonightService {
   private readonly scoringEngine = new RecommendationScoringEngine();
   private readonly duplicateService: DuplicateOwnershipService;
   private readonly franchiseSignalsService: FranchiseRecommendationSignals;
+  private readonly explanationService = new RecommendationExplanationService();
+  private readonly explanationResponseBuilder = new ExplanationResponseBuilder();
 
   constructor(
     private readonly libraryService: UserLibraryService,
@@ -233,6 +241,18 @@ export class PlayTonightService {
           duplicatePenaltyMultiplier: duplicateSignal?.penaltyMultiplier ?? 1,
           estimatedCompletionHours: entry.canonicalMetadata.estimatedHours,
           platformPreferenceMatched: preferredPlatforms.includes(entry.ownershipRecords[0]?.platform ?? "steam"),
+          explanationInput: this.toExplanationInput({
+            entry,
+            preferredPlatforms,
+            targetSessionMinutes: input.sessionOption.targetSessionMinutes,
+            activeRotation,
+            scoredFactors: scored.factors,
+            duplicatePenaltyMultiplier: duplicateSignal?.penaltyMultiplier ?? 1,
+            duplicateCount: allLibraryEntriesForContext.filter(
+              (libraryEntry) => libraryEntry.gameId === candidate.game.id,
+            ).length,
+            franchiseSignal,
+          }),
         } satisfies RankedRecommendation;
       })
       .filter((entry) => this.matchesSessionFilter(entry, input.sessionOption.id))
@@ -251,6 +271,17 @@ export class PlayTonightService {
         duplicatePenaltyMultiplier: 1,
         estimatedCompletionHours: entry.canonicalMetadata.estimatedHours,
         platformPreferenceMatched: true,
+        explanationInput: this.toExplanationInput({
+          entry,
+          preferredPlatforms,
+          targetSessionMinutes: input.sessionOption.targetSessionMinutes,
+          activeRotation,
+          scoredFactors: scored.factors,
+          duplicatePenaltyMultiplier: 1,
+          duplicateCount: allLibraryEntriesForContext.filter(
+            (libraryEntry) => libraryEntry.gameId === fallback.game.id,
+          ).length,
+        }),
       } satisfies RankedRecommendation;
     }).sort((left, right) => right.score - left.score || left.gameId.localeCompare(right.gameId));
   }
@@ -260,27 +291,19 @@ export class PlayTonightService {
     alternatives: RankedRecommendation[],
   ): PlayTonightRecommendationCard {
     const game = getGameById(recommendation.gameId);
-    const metadata = getMetadataByGameId(recommendation.gameId);
     const platform = getPlatformById(recommendation.platform);
     const strongerAlternative = alternatives[0];
-
-    const whyThisGame = [
-      recommendation.reasons[0] ?? "Strong match across your weighted recommendation signals.",
-      recommendation.franchiseSignal?.nextRecommendedGameTitle
-        ? `Franchise momentum: next suggested entry is ${recommendation.franchiseSignal.nextRecommendedGameTitle}.`
-        : `Estimated completion: ${metadata.estimatedHours} hours.`,
-    ];
-
-    const whyNow = [
-      `Optimized for tonight's ${metadata.completionLikelihood} completion confidence.`,
-      recommendation.platformPreferenceMatched
-        ? `${platform.name} is aligned with your current platform preference.`
-        : `${platform.name} stays available even when your preferred platform has no fit.`,
-    ];
-
-    const whyNotSomethingElse = strongerAlternative
-      ? `${getGameById(strongerAlternative.gameId).canonicalTitle} ranked close, but this pick had the stronger combined score and session fit.`
-      : "No higher-confidence alternatives beat this recommendation right now.";
+    const explanationResult = this.explanationService.generate({
+      useCase: "play-tonight",
+      signals: recommendation.explanationInput,
+    });
+    const explanation = this.explanationResponseBuilder.build({
+      result: explanationResult,
+      alternativeTitle: strongerAlternative
+        ? getGameById(strongerAlternative.gameId).canonicalTitle
+        : undefined,
+      relation: "lower",
+    });
 
     return {
       recommendationId: recommendation.recommendationId,
@@ -292,15 +315,8 @@ export class PlayTonightService {
       coverArtAlt: game.coverArt.alt,
       estimatedCompletionHours: recommendation.estimatedCompletionHours,
       recommendationScore: Math.round(recommendation.score),
-      recommendationReasons: [
-        ...whyThisGame,
-        `Duplicate ownership multiplier: ${roundToTwo(recommendation.duplicatePenaltyMultiplier)}x.`,
-      ].slice(0, 4),
-      explanation: {
-        whyThisGame,
-        whyNow,
-        whyNotSomethingElse,
-      },
+      recommendationReasons: explanationResult.reasons.map((reason) => reason.message),
+      explanation,
       scoringFactors: recommendation.factors,
     };
   }
@@ -379,6 +395,51 @@ export class PlayTonightService {
       importSource: toImportSource(platform),
       playStatus: toPlayStatus(entry.game.status),
       ownedDays: toOwnedDays(earliestAcquiredAt),
+    };
+  }
+
+  private toExplanationInput(input: {
+    entry: LibraryGameWithOwnership;
+    preferredPlatforms: SupportedLibraryPlatform[];
+    targetSessionMinutes: number;
+    activeRotation: ScoringCandidate[];
+    scoredFactors: RankedRecommendation["factors"];
+    duplicatePenaltyMultiplier: number;
+    duplicateCount: number;
+    franchiseSignal?: ReturnType<FranchiseRecommendationSignals["listForUser"]>[number];
+  }): RecommendationExplanationInput {
+    const platform = input.entry.ownershipRecords[0]?.platform ?? "steam";
+    const platformPreferenceRank = input.preferredPlatforms.indexOf(platform);
+
+    return {
+      platform,
+      factorBreakdown: input.scoredFactors,
+      completionLikelihood: input.entry.canonicalMetadata.completionLikelihood,
+      estimatedCompletionHours: input.entry.canonicalMetadata.estimatedHours,
+      backlogAgeDays: this.toRecommendationContextEntry(input.entry).ownedDays,
+      genreNames: input.entry.canonicalGame.genres.map((genre) => genre.name),
+      overlappingGenreNames: input.entry.canonicalGame.genres
+        .filter((genre) =>
+          input.activeRotation.some((candidate) =>
+            candidate.game.genres.some((activeGenre) => activeGenre.id === genre.id),
+          ),
+        )
+        .map((genre) => genre.name),
+      targetSessionMinutes: input.targetSessionMinutes,
+      preferredPlatformMatched: platformPreferenceRank >= 0,
+      platformPreferenceRank: platformPreferenceRank >= 0 ? platformPreferenceRank + 1 : undefined,
+      duplicateOwnershipCount: input.duplicateCount,
+      duplicatePenaltyMultiplier: input.duplicatePenaltyMultiplier,
+      isInActiveRotation: input.entry.game.status === "Active",
+      franchise: input.franchiseSignal
+        ? {
+            name: input.franchiseSignal.franchiseName,
+            nextRecommendedGameTitle: input.franchiseSignal.nextRecommendedGameTitle,
+            nearCompletionBonus: input.franchiseSignal.nearFranchiseCompletionBonus,
+            seriesContinuationBonus: input.franchiseSignal.seriesContinuationBonus,
+            affinityScore: input.franchiseSignal.franchiseAffinityScore,
+          }
+        : undefined,
     };
   }
 

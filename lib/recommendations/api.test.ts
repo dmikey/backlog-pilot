@@ -58,8 +58,9 @@ test("recommendation API ranks deterministically, filters candidates, and return
       platform: string;
       score: number;
       confidence: number;
+      reasons: string[];
       factorBreakdown: { sessionFit: number };
-      explanation: { whyThisGame: string[] };
+      explanation: { whyThisGame: string[]; structuredReasons: Array<{ category: string }> };
     } | null;
     alternatives: Array<{ score: number; platform: string }>;
   };
@@ -70,8 +71,11 @@ test("recommendation API ranks deterministically, filters candidates, and return
   assert.ok((payload.primaryRecommendation?.score ?? 0) <= 100);
   assert.ok((payload.primaryRecommendation?.confidence ?? 0) >= 0);
   assert.ok((payload.primaryRecommendation?.confidence ?? 0) <= 1);
+  assert.ok((payload.primaryRecommendation?.reasons.length ?? 0) >= 3);
+  assert.ok((payload.primaryRecommendation?.reasons.length ?? 0) <= 5);
   assert.ok((payload.primaryRecommendation?.factorBreakdown.sessionFit ?? 0) >= 0);
   assert.ok((payload.primaryRecommendation?.explanation.whyThisGame.length ?? 0) > 0);
+  assert.ok((payload.primaryRecommendation?.explanation.structuredReasons.length ?? 0) >= 3);
   assert.ok(payload.alternatives.every((entry) => entry.platform === "steam"));
 
   for (let index = 1; index < payload.alternatives.length; index += 1) {
