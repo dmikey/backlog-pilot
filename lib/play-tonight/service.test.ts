@@ -96,5 +96,6 @@ test("PlayTonightService generates explanation output for why this game, why now
   assert.ok(experience.primaryRecommendation.explanation.whyThisGame.length > 0);
   assert.ok(experience.primaryRecommendation.explanation.whyNow.length > 0);
   assert.ok(experience.primaryRecommendation.explanation.whyNotSomethingElse.length > 0);
+  assert.equal(experience.primaryRecommendation.explanation.useCase, "play-tonight");
+  assert.ok(experience.primaryRecommendation.explanation.structuredReasons.length >= 3);
 });
-

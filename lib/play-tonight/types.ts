@@ -1,5 +1,6 @@
 import type { RecommendationFactorBreakdown } from "@/lib/recommendations/scoring";
 import type { SupportedLibraryPlatform } from "@/lib/library/types";
+import type { RecommendationExplanationResponse } from "@/lib/recommendations/explanations";
 
 export const playTonightActions = [
   "play_this",
@@ -28,11 +29,7 @@ export interface PlayTonightRecommendationCard {
   estimatedCompletionHours: number;
   recommendationScore: number;
   recommendationReasons: string[];
-  explanation: {
-    whyThisGame: string[];
-    whyNow: string[];
-    whyNotSomethingElse: string;
-  };
+  explanation: RecommendationExplanationResponse;
   scoringFactors: RecommendationFactorBreakdown;
 }
 

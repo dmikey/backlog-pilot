@@ -268,12 +268,14 @@ Analytics tracked:
 - `RecommendationApiService` (request orchestration + scenario defaults)
 - `RecommendationQueryService` (library/metadata/scoring/franchise + duplicate signals)
 - `RecommendationResponseBuilder` (typed response contracts + explanation output)
+- `RecommendationExplanationService` + `ExplanationTemplateEngine` + `ExplanationResponseBuilder` (deterministic explanation generation and structured UI-safe payloads)
 
 Response contract includes:
 
 - primary recommendation + alternatives
 - score + confidence
 - reasons + factor breakdown
+- structured explanation reasons for future AI enrichment
 - estimated completion hours
 - deterministic ranking output with pagination metadata
 

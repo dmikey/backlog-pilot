@@ -3,8 +3,16 @@ import type {
   RecommendationApiResponse,
   RecommendationQueryRequest,
 } from "@/lib/recommendations/api-types";
+import {
+  ExplanationResponseBuilder,
+  RecommendationExplanationService,
+  toRecommendationExplanationUseCase,
+} from "@/lib/recommendations/explanations";
 
 export class RecommendationResponseBuilder {
+  private readonly explanationService = new RecommendationExplanationService();
+  private readonly explanationResponseBuilder = new ExplanationResponseBuilder();
+
   build(input: {
     request: Required<Pick<RecommendationQueryRequest, "type">> & {
       filters: NonNullable<RecommendationQueryRequest["filters"]>;
@@ -30,14 +38,14 @@ export class RecommendationResponseBuilder {
         ? this.toRecommendation(primary, {
             title: topAlternative?.title,
             relation: "lower",
-            targetSessionMinutes: input.request.targetSessionMinutes,
+            requestType: input.request.type,
           })
         : null,
       alternatives: alternatives.map((candidate) =>
         this.toRecommendation(candidate, {
           title: primary?.title,
           relation: "higher",
-          targetSessionMinutes: input.request.targetSessionMinutes,
+          requestType: input.request.type,
         }),
       ),
       totalCandidates: input.rankedCandidates.length,
@@ -49,26 +57,18 @@ export class RecommendationResponseBuilder {
     input: {
       title?: string;
       relation: "higher" | "lower";
-      targetSessionMinutes: number;
+      requestType: RecommendationQueryRequest["type"];
     },
   ) {
-    const whyThisGame = [
-      candidate.reasons[0] ?? "Strong weighted score across recommendation factors.",
-      `Estimated ${candidate.estimatedCompletionHours}h to complete.`,
-    ];
-
-    const whyNow = [
-      `Optimized for ${input.targetSessionMinutes} minute session planning.`,
-      candidate.confidence >= 0.8
-        ? "Confidence is high based on available gameplay and ownership signals."
-        : "Confidence is moderate with room for preference tuning over time.",
-    ];
-
-    const whyNotSomethingElse = input.title
-      ? input.relation === "higher"
-        ? `${input.title} ranked above this option on combined score and session fit.`
-        : `${input.title} ranked nearby, but this recommendation scored higher overall.`
-      : "No higher-ranked alternative currently beats this recommendation.";
+    const explanationResult = this.explanationService.generate({
+      useCase: toRecommendationExplanationUseCase(input.requestType),
+      signals: candidate.explanationInput,
+    });
+    const explanation = this.explanationResponseBuilder.build({
+      result: explanationResult,
+      alternativeTitle: input.title,
+      relation: input.relation,
+    });
 
     return {
       recommendationId: candidate.recommendationId,
@@ -78,13 +78,9 @@ export class RecommendationResponseBuilder {
       score: Math.round(candidate.score),
       confidence: candidate.confidence,
       estimatedCompletionHours: candidate.estimatedCompletionHours,
-      reasons: candidate.reasons,
+      reasons: explanationResult.reasons.map((reason) => reason.message),
       factorBreakdown: candidate.factors,
-      explanation: {
-        whyThisGame,
-        whyNow,
-        whyNotSomethingElse,
-      },
+      explanation,
     };
   }
 }

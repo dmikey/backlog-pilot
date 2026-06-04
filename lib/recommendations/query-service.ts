@@ -17,6 +17,7 @@ import type {
   RankedRecommendationCandidate,
   RecommendationFilters,
 } from "@/lib/recommendations/api-types";
+import type { RecommendationExplanationInput } from "@/lib/recommendations/explanations";
 
 const defaultOwnedDays = 365;
 
@@ -81,6 +82,10 @@ export class RecommendationQueryService {
         const franchiseSignal = candidate.game.franchiseId
           ? franchiseSignals.get(candidate.game.franchiseId)
           : undefined;
+        const duplicateCount = allLibraryEntriesForContext.filter(
+          (libraryEntry) => libraryEntry.gameId === candidate.game.id,
+        ).length;
+        const platform = entry.ownershipRecords[0]?.platform ?? "steam";
 
         const boostedScore = clamp(
           scored.score * (duplicateSignal?.penaltyMultiplier ?? 1) +
@@ -90,8 +95,6 @@ export class RecommendationQueryService {
           0,
           100,
         );
-
-        const platform = entry.ownershipRecords[0]?.platform ?? "steam";
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,
@@ -103,6 +106,17 @@ export class RecommendationQueryService {
           estimatedCompletionHours: entry.canonicalMetadata.estimatedHours,
           reasons: scored.reasons,
           factors: scored.factors,
+          explanationInput: this.toExplanationInput({
+            entry,
+            platform,
+            duplicateCount,
+            duplicatePenaltyMultiplier: duplicateSignal?.penaltyMultiplier ?? 1,
+            preferredPlatforms,
+            targetSessionMinutes: input.targetSessionMinutes,
+            activeRotation,
+            scoredFactors: scored.factors,
+            franchiseSignal,
+          }),
         } satisfies RankedRecommendationCandidate;
       })
       .sort((left, right) =>
@@ -256,6 +270,53 @@ export class RecommendationQueryService {
     for (const entry of source) {
       for (const ownership of entry.ownershipRecords) {
         counts.set(ownership.platform, (counts.get(ownership.platform) ?? 0) + 1);
+      }
+
+      private toExplanationInput(input: {
+        entry: LibraryGameWithOwnership;
+        platform: SupportedLibraryPlatform;
+        duplicateCount: number;
+        duplicatePenaltyMultiplier: number;
+        preferredPlatforms: SupportedLibraryPlatform[];
+        targetSessionMinutes: number;
+        activeRotation: ScoringCandidate[];
+        scoredFactors: RankedRecommendationCandidate["factors"];
+        franchiseSignal?: ReturnType<FranchiseRecommendationSignals["listForUser"]>[number];
+      }): RecommendationExplanationInput {
+        const ownedDays = this.toRecommendationContextEntry(input.entry).ownedDays;
+        const overlappingGenreNames = input.entry.canonicalGame.genres
+          .filter((genre) =>
+            input.activeRotation.some((candidate) =>
+              candidate.game.genres.some((activeGenre) => activeGenre.id === genre.id),
+            ),
+          )
+          .map((genre) => genre.name);
+        const platformPreferenceRank = input.preferredPlatforms.indexOf(input.platform);
+
+        return {
+          platform: input.platform,
+          factorBreakdown: input.scoredFactors,
+          completionLikelihood: input.entry.canonicalMetadata.completionLikelihood,
+          estimatedCompletionHours: input.entry.canonicalMetadata.estimatedHours,
+          backlogAgeDays: ownedDays,
+          genreNames: input.entry.canonicalGame.genres.map((genre) => genre.name),
+          overlappingGenreNames,
+          targetSessionMinutes: input.targetSessionMinutes,
+          preferredPlatformMatched: platformPreferenceRank >= 0,
+          platformPreferenceRank: platformPreferenceRank >= 0 ? platformPreferenceRank + 1 : undefined,
+          duplicateOwnershipCount: input.duplicateCount,
+          duplicatePenaltyMultiplier: input.duplicatePenaltyMultiplier,
+          isInActiveRotation: input.entry.game.status === "Active",
+          franchise: input.franchiseSignal
+            ? {
+                name: input.franchiseSignal.franchiseName,
+                nextRecommendedGameTitle: input.franchiseSignal.nextRecommendedGameTitle,
+                nearCompletionBonus: input.franchiseSignal.nearFranchiseCompletionBonus,
+                seriesContinuationBonus: input.franchiseSignal.seriesContinuationBonus,
+                affinityScore: input.franchiseSignal.franchiseAffinityScore,
+              }
+            : undefined,
+        };
       }
     }
 

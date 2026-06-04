@@ -4,6 +4,10 @@ import type {
   OwnershipType,
   SupportedLibraryPlatform,
 } from "@/lib/library/types";
+import type {
+  RecommendationExplanationInput,
+  RecommendationExplanationResponse,
+} from "@/lib/recommendations/explanations";
 
 export const recommendationRequestTypes = [
   "play-tonight",
@@ -49,11 +53,7 @@ export interface RecommendationCandidateResponse {
   estimatedCompletionHours: number;
   reasons: string[];
   factorBreakdown: RecommendationFactorBreakdown;
-  explanation: {
-    whyThisGame: string[];
-    whyNow: string[];
-    whyNotSomethingElse: string;
-  };
+  explanation: RecommendationExplanationResponse;
 }
 
 export interface RecommendationApiResponse {
@@ -79,4 +79,5 @@ export interface RankedRecommendationCandidate {
   estimatedCompletionHours: number;
   reasons: string[];
   factors: RecommendationFactorBreakdown;
+  explanationInput: RecommendationExplanationInput;
 }
