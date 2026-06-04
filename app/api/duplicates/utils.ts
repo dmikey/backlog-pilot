@@ -6,6 +6,17 @@ const platformLabelById: Record<string, string> = {
   psvita: "PSVita",
   psp: "PSP",
   gba: "GBA",
+  nes: "NES",
+  snes: "SNES",
+  genesis: "Genesis",
+  "game-boy": "Game Boy",
+  "game-boy-color": "Game Boy Color",
+  n64: "N64",
+  ps1: "PS1",
+  ps2: "PS2",
+  nds: "NDS",
+  dreamcast: "Dreamcast",
+  arcade: "Arcade",
 };
 
 export function getRequiredUserId(url: URL) {

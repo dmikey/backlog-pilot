@@ -4,6 +4,17 @@ export const platformIds = [
   "gba",
   "psp",
   "psvita",
+  "nes",
+  "snes",
+  "genesis",
+  "game-boy",
+  "game-boy-color",
+  "n64",
+  "ps1",
+  "ps2",
+  "nds",
+  "dreamcast",
+  "arcade",
 ] as const;
 
 export const ownershipTypes = ["physical", "digital", "rom", "subscription"] as const;
@@ -31,6 +42,18 @@ export const importSourceIds = [
   "gba",
   "psp",
   "psvita",
+  "nes",
+  "snes",
+  "genesis",
+  "game-boy",
+  "game-boy-color",
+  "n64",
+  "ps1",
+  "ps2",
+  "nds",
+  "dreamcast",
+  "arcade",
+  "retroachievements",
 ] as const;
 
 export type PlatformId = (typeof platformIds)[number];
