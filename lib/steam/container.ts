@@ -13,6 +13,8 @@ import {
   getSteamActivityService,
   resetSteamActivityServiceForTests,
 } from "@/lib/activity/container";
+import { getAchievementService, resetAchievementServiceForTests } from "@/lib/achievements/container";
+import { SteamAchievementProvider } from "@/lib/steam/achievement-provider";
 
 interface SteamServiceSet {
   accountService: SteamAccountService;
@@ -38,15 +40,23 @@ export function resetSteamServicesForTests(overrides?: {
   authFetchImpl?: typeof fetch;
   identityFetchImpl?: typeof fetch;
   collectionFetchImpl?: typeof fetch;
+  achievementFetchImpl?: typeof fetch;
+  enableAchievementImport?: boolean;
 }) {
   resetSteamActivityServiceForTests();
-  services = createServices(overrides);
+  resetAchievementServiceForTests();
+  services = createServices({
+    ...overrides,
+    enableAchievementImport: overrides?.enableAchievementImport ?? false,
+  });
 }
 
 function createServices(overrides?: {
   authFetchImpl?: typeof fetch;
   identityFetchImpl?: typeof fetch;
   collectionFetchImpl?: typeof fetch;
+  achievementFetchImpl?: typeof fetch;
+  enableAchievementImport?: boolean;
 }) {
   const config = getSteamConfigFromEnv();
   const repositories = createInMemorySteamRepository();
@@ -55,6 +65,13 @@ function createServices(overrides?: {
     config,
     fetchImpl: overrides?.collectionFetchImpl,
   });
+  const achievementProvider =
+    overrides?.enableAchievementImport === false
+      ? undefined
+      : new SteamAchievementProvider({
+          config,
+          fetchImpl: overrides?.achievementFetchImpl,
+        });
   const activityProvider = new SteamActivityProvider(collectionProvider);
   const gameMatcher = new SteamGameMatcher();
   const syncService = new SteamSyncService({
@@ -62,6 +79,8 @@ function createServices(overrides?: {
     collectionProvider,
     activityProvider,
     activityService: getSteamActivityService(),
+    achievementProvider,
+    achievementService: getAchievementService(),
     matcher: gameMatcher,
     libraryService: getUserLibraryService(),
     syncStatusRepository: repositories.syncStatuses,
