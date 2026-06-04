@@ -222,6 +222,41 @@ Routes:
 - `GET /activity/dormant?userId=:userId` — dormant/abandoned activity
 - `GET /activity/:gameId?userId=:userId` — single game activity record
 
+### Steam Achievement Import and Completion Signals
+
+`lib/achievements` adds optional achievement ingestion and completion intelligence on top of Steam sync and recommendation services.
+
+- `SteamAchievementProvider` fetches and normalizes:
+  - game achievement availability (`totalAchievements`)
+  - player unlock progress (`unlockedAchievements`) when available
+- `AchievementService` stores per-game achievement progress and emits:
+  - `completionPercentage`
+  - mastery status (`Not Started`, `In Progress`, `Near Completion`, `Completed`, `Mastered`)
+  - analytics slices (most completed, near completion, mastered, engagement rankings, franchise opportunities)
+- `CompletionSignalEngine` produces recommendation-ready completion and mastery signals:
+  - `completionCandidate`
+  - `masteryCandidate`
+  - `franchiseMomentum`
+  - `achievementEngagementScore`
+  - `nearCompletionBonus`
+  - `achievementMomentumBonus`
+  - `masteryOpportunityBonus`
+  - `abandonmentRiskScore`
+
+Steam sync integration:
+
+- `SteamSyncService` now imports achievements as an optional step.
+- Missing achievement payloads or user-private achievement data does **not** fail sync.
+- Games with no achievements are tracked with `totalAchievements = 0`.
+
+Routes:
+
+- `GET /achievements?userId=:userId`
+- `GET /achievements/completed?userId=:userId`
+- `GET /achievements/near-completion?userId=:userId`
+- `GET /achievements/mastered?userId=:userId`
+- `GET /achievements/:gameId?userId=:userId`
+
 ### Recommendation Scoring Engine
 
 `lib/recommendations/scoring.ts` contains a deterministic, configurable recommendation scoring engine. It is independent of LLM services and produces explainable outputs with:
@@ -289,6 +324,7 @@ Analytics tracked:
 - `RecommendationApiService` (request orchestration + scenario defaults)
 - `RecommendationQueryService` (library/metadata/scoring/franchise + duplicate signals)
 - `RecommendationQueryService` also applies activity signals from Steam engagement (`recentlyPlayedBoost`, continuation bonus, dormant revival boost, abandonment risk).
+- `RecommendationQueryService` also applies achievement progression signals (`nearCompletionBonus`, `achievementMomentumBonus`, `masteryOpportunityBonus`, `abandonmentRiskScore`) so near-finished games can be surfaced at the right time.
 - `RecommendationResponseBuilder` (typed response contracts + explanation output)
 - `RecommendationExplanationService` + `ExplanationTemplateEngine` + `ExplanationResponseBuilder` (deterministic explanation generation and structured UI-safe payloads)
 

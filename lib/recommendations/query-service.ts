@@ -1,5 +1,6 @@
 import { demoLibraryEntries, getGameById, getMetadataByGameId } from "@/lib/demo-data";
 import type { ImportSource } from "@/lib/domain/types";
+import { AchievementService } from "@/lib/achievements/service";
 import { DuplicateOwnershipService } from "@/lib/duplicates/duplicate-ownership-service";
 import { FranchiseRecommendationSignals } from "@/lib/franchises/recommendation-signals";
 import { getSteamActivityService } from "@/lib/activity/container";
@@ -32,6 +33,7 @@ export class RecommendationQueryService {
   constructor(
     private readonly libraryService: UserLibraryService,
     private readonly activityService: SteamActivityService = getSteamActivityService(),
+    private readonly achievementService: AchievementService = new AchievementService(),
   ) {
     this.duplicateService = new DuplicateOwnershipService(libraryService);
     this.franchiseSignalsService = new FranchiseRecommendationSignals(libraryService);
@@ -84,6 +86,11 @@ export class RecommendationQueryService {
         .getRecommendationSignals(input.userId)
         .map((signal) => [signal.canonicalGameId, signal]),
     );
+    const achievementSignals = new Map(
+      this.achievementService
+        .getRecommendationSignals(input.userId)
+        .map((signal) => [signal.canonicalGameId, signal]),
+    );
 
     return source
       .map((entry) => {
@@ -94,6 +101,7 @@ export class RecommendationQueryService {
           ? franchiseSignals.get(candidate.game.franchiseId)
           : undefined;
         const activitySignal = activitySignals.get(candidate.game.id);
+        const achievementSignal = achievementSignals.get(candidate.game.id);
         const duplicateCount = allLibraryEntriesForContext.filter(
           (libraryEntry) => libraryEntry.gameId === candidate.game.id,
         ).length;
@@ -107,7 +115,11 @@ export class RecommendationQueryService {
             (activitySignal?.recentlyPlayedBoost ?? 0) * 10 +
             (activitySignal?.activeGameContinuationBonus ?? 0) * 8 +
             (activitySignal?.dormantGameBoost ?? 0) * 5 -
-            (activitySignal?.abandonmentRiskScore ?? 0) * 6,
+            (activitySignal?.abandonmentRiskScore ?? 0) * 6 +
+            (achievementSignal?.nearCompletionBonus ?? 0) * 12 +
+            (achievementSignal?.achievementMomentumBonus ?? 0) * 7 +
+            (achievementSignal?.masteryOpportunityBonus ?? 0) * 6 -
+            (achievementSignal?.abandonmentRiskScore ?? 0) * 5,
           0,
           100,
         );
@@ -119,9 +131,19 @@ export class RecommendationQueryService {
               : activitySignal?.classification === "Abandoned"
                 ? "Low-engagement pattern suggests this title is lower current priority."
                 : undefined;
+        const achievementReason =
+          achievementSignal?.nearCompletionBonus && achievementSignal.completionPercentage >= 85
+            ? `Achievement progress is at ${achievementSignal.completionPercentage}%, making this a strong finish candidate.`
+            : achievementSignal?.masteryOpportunityBonus && achievementSignal.completionPercentage > 0
+              ? `Achievement mastery opportunity detected at ${achievementSignal.completionPercentage}% completion.`
+              : undefined;
         const reasons = activityReason
           ? [activityReason, ...scored.reasons]
           : scored.reasons.slice();
+
+        if (achievementReason) {
+          reasons.unshift(achievementReason);
+        }
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,

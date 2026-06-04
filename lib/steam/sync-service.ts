@@ -1,7 +1,9 @@
 import type { UserLibraryService } from "@/lib/library/service";
 import type { SteamActivityProvider } from "@/lib/activity/steam-activity-provider";
 import type { SteamActivityService } from "@/lib/activity/service";
+import type { AchievementService } from "@/lib/achievements/service";
 import type { SteamAccountService } from "@/lib/steam/account-service";
+import type { SteamAchievementProvider } from "@/lib/steam/achievement-provider";
 import type { SteamCollectionProvider } from "@/lib/steam/collection-provider";
 import type { SteamGameMatcher } from "@/lib/steam/game-matcher";
 import type {
@@ -20,6 +22,8 @@ interface SteamSyncServiceDependencies {
   collectionProvider: SteamCollectionProvider;
   activityProvider: SteamActivityProvider;
   activityService: SteamActivityService;
+  achievementProvider?: SteamAchievementProvider;
+  achievementService?: AchievementService;
   matcher: SteamGameMatcher;
   libraryService: UserLibraryService;
   syncStatusRepository: SteamSyncStatusRepository;
@@ -79,6 +83,7 @@ export class SteamSyncService {
         ).map((snapshot) => [snapshot.platformGameId, snapshot]),
       );
       const activityUpdates: Parameters<SteamActivityService["upsertActivities"]>[0] = [];
+      const matchedCanonicalIdsByAppId = new Map<string, string>();
 
       let gamesMatched = 0;
       let newAcquisitions = 0;
@@ -101,6 +106,7 @@ export class SteamSyncService {
         }
 
         gamesMatched += 1;
+        matchedCanonicalIdsByAppId.set(appId, match.game.id);
         if (!existing) {
           newAcquisitions += 1;
         }
@@ -163,6 +169,7 @@ export class SteamSyncService {
 
       this.dependencies.unmatchedRepository.replaceByUserId(userId, unmatched);
       await this.dependencies.activityService.upsertActivities(activityUpdates);
+      await this.importAchievements(userId, steamId, matchedCanonicalIdsByAppId);
 
       const completedAt = new Date().toISOString();
       const status = this.dependencies.syncStatusRepository.upsert({
@@ -261,6 +268,50 @@ export class SteamSyncService {
     }
 
     return status.steamId;
+  }
+
+  private async importAchievements(
+    userId: string,
+    steamId: string,
+    matchedCanonicalIdsByAppId: Map<string, string>,
+  ) {
+    if (
+      !this.dependencies.achievementProvider ||
+      !this.dependencies.achievementService ||
+      matchedCanonicalIdsByAppId.size === 0
+    ) {
+      return;
+    }
+
+    try {
+      const snapshots = await this.dependencies.achievementProvider.getAchievementSnapshots(
+        steamId,
+        [...matchedCanonicalIdsByAppId.keys()]
+          .map((appId) => Number.parseInt(appId, 10))
+          .filter((appId) => Number.isFinite(appId) && appId > 0),
+      );
+      const progressUpdates: Parameters<AchievementService["upsertProgress"]>[0] = [];
+
+      for (const snapshot of snapshots) {
+        const canonicalGameId = matchedCanonicalIdsByAppId.get(snapshot.platformGameId);
+
+        if (!canonicalGameId) {
+          continue;
+        }
+
+        progressUpdates.push({
+          userId,
+          canonicalGameId,
+          platform: "steam",
+          totalAchievements: snapshot.totalAchievements,
+          unlockedAchievements: snapshot.unlockedAchievements,
+        });
+      }
+
+      this.dependencies.achievementService.upsertProgress(progressUpdates);
+    } catch {
+      // Achievement import is intentionally optional; sync should still complete when unavailable.
+    }
   }
 }
 
