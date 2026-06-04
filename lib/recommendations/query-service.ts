@@ -5,6 +5,7 @@ import { DuplicateOwnershipService } from "@/lib/duplicates/duplicate-ownership-
 import { FranchiseRecommendationSignals } from "@/lib/franchises/recommendation-signals";
 import { getSteamActivityService } from "@/lib/activity/container";
 import type { SteamActivityService } from "@/lib/activity/service";
+import { SessionIntelligenceService } from "@/lib/sessions/service";
 import type {
   LibraryGameWithOwnership,
   SupportedLibraryPlatform,
@@ -34,6 +35,7 @@ export class RecommendationQueryService {
     private readonly libraryService: UserLibraryService,
     private readonly activityService: SteamActivityService = getSteamActivityService(),
     private readonly achievementService: AchievementService = new AchievementService(),
+    private readonly sessionService: SessionIntelligenceService = new SessionIntelligenceService(),
   ) {
     this.duplicateService = new DuplicateOwnershipService(libraryService);
     this.franchiseSignalsService = new FranchiseRecommendationSignals(libraryService);
@@ -102,6 +104,12 @@ export class RecommendationQueryService {
           : undefined;
         const activitySignal = activitySignals.get(candidate.game.id);
         const achievementSignal = achievementSignals.get(candidate.game.id);
+        const sessionInsight = this.sessionService.calculateForRecommendation({
+          gameId: candidate.game.id,
+          availableMinutes: input.targetSessionMinutes,
+          playtimeHours: entry.game.playtimeHours,
+          activitySignal,
+        });
         const duplicateCount = allLibraryEntriesForContext.filter(
           (libraryEntry) => libraryEntry.gameId === candidate.game.id,
         ).length;
@@ -119,7 +127,11 @@ export class RecommendationQueryService {
             (achievementSignal?.nearCompletionBonus ?? 0) * 12 +
             (achievementSignal?.achievementMomentumBonus ?? 0) * 7 +
             (achievementSignal?.masteryOpportunityBonus ?? 0) * 6 -
-            (achievementSignal?.abandonmentRiskScore ?? 0) * 5,
+            (achievementSignal?.abandonmentRiskScore ?? 0) * 5 +
+            sessionInsight.recommendationSignals.sessionFitBonus * 10 +
+            sessionInsight.recommendationSignals.quickWinBonus * 6 +
+            sessionInsight.recommendationSignals.longSessionBonus * 5 -
+            sessionInsight.recommendationSignals.sessionMismatchPenalty * 8,
           0,
           100,
         );
@@ -144,6 +156,7 @@ export class RecommendationQueryService {
         if (achievementReason) {
           reasons.unshift(achievementReason);
         }
+        reasons.unshift(sessionInsight.explanation);
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,
