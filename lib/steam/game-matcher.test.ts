@@ -10,6 +10,7 @@ test("SteamGameMatcher prioritizes Steam app id mapping", () => {
     appId: 1113000,
     title: "Persona 4 Golden",
     totalPlaytimeMinutes: 120,
+    recentPlaytimeMinutes: 30,
   });
 
   assert.ok(match);
@@ -22,6 +23,7 @@ test("SteamGameMatcher supports exact and alias title matching", () => {
     appId: 999999999,
     title: "Yakuza 0",
     totalPlaytimeMinutes: 0,
+    recentPlaytimeMinutes: 0,
   });
 
   assert.ok(exact);
@@ -32,6 +34,7 @@ test("SteamGameMatcher supports exact and alias title matching", () => {
     appId: 999999998,
     title: "P4G",
     totalPlaytimeMinutes: 0,
+    recentPlaytimeMinutes: 0,
   });
 
   assert.ok(alias);
@@ -44,6 +47,7 @@ test("SteamGameMatcher applies franchise validation and avoids false positives",
     appId: 999999997,
     title: "Final Fantasy Tactics Lions Edition",
     totalPlaytimeMinutes: 0,
+    recentPlaytimeMinutes: 0,
   });
 
   assert.ok(franchise);
@@ -54,6 +58,7 @@ test("SteamGameMatcher applies franchise validation and avoids false positives",
     appId: 999999996,
     title: "Completely Unknown Adventure",
     totalPlaytimeMinutes: 0,
+    recentPlaytimeMinutes: 0,
   });
 
   assert.equal(unmatched, undefined);
@@ -62,6 +67,7 @@ test("SteamGameMatcher applies franchise validation and avoids false positives",
     appId: 999999995,
     title: "Persona Kart Racing",
     totalPlaytimeMinutes: 0,
+    recentPlaytimeMinutes: 0,
   });
 
   assert.equal(falsePositive, undefined);

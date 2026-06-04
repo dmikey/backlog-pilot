@@ -16,6 +16,7 @@ interface SteamOwnedGamePayload {
   appid?: number;
   name?: string;
   playtime_forever?: number;
+  playtime_2weeks?: number;
   rtime_last_played?: number;
   img_icon_url?: string;
   img_logo_url?: string;
@@ -65,6 +66,7 @@ function normalizeSteamOwnedGame(
     appId: game.appid,
     title: game.name.trim(),
     totalPlaytimeMinutes: Math.max(0, Math.floor(game.playtime_forever ?? 0)),
+    recentPlaytimeMinutes: Math.max(0, Math.floor(game.playtime_2weeks ?? 0)),
     lastPlayedAt:
       typeof game.rtime_last_played === "number" && game.rtime_last_played > 0
         ? new Date(game.rtime_last_played * 1000).toISOString()
