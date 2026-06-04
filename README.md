@@ -358,6 +358,7 @@ Analytics tracked:
 - `RecommendationQueryService` also applies activity signals from Steam engagement (`recentlyPlayedBoost`, continuation bonus, dormant revival boost, abandonment risk).
 - `RecommendationQueryService` also applies achievement progression signals (`nearCompletionBonus`, `achievementMomentumBonus`, `masteryOpportunityBonus`, `abandonmentRiskScore`) so near-finished games can be surfaced at the right time.
 - `RecommendationQueryService` also layers session intelligence modifiers (`sessionFitBonus`, `sessionMismatchPenalty`, `quickWinBonus`, `longSessionBonus`) to better align recommendations with available play time.
+- `RecommendationQueryService` also layers completion prediction signals (`completionLikelihoodBonus`, `abandonmentRiskPenalty`, `franchiseMomentumBonus`, `confidenceModifier`) from `CompletionPredictionEngine`.
 - `RecommendationResponseBuilder` (typed response contracts + explanation output)
 - `RecommendationExplanationService` + `ExplanationTemplateEngine` + `ExplanationResponseBuilder` (deterministic explanation generation and structured UI-safe payloads)
 
@@ -388,6 +389,36 @@ Supported request types:
 - `long-session`
 - `backlog-reduction`
 - `custom`
+
+### Completion Prediction Engine
+
+`lib/completion-predictions` adds pre-play finishability intelligence built around:
+
+- `CompletionPredictionEngine` (orchestrates predictions, confidence, recommendation signals, analytics)
+- `CompletionLikelihoodService` (historical completion/abandonment behavior, platform/genre/franchise preference, session and length compatibility)
+- `AbandonmentRiskEngine` (abandonment risk scoring + risk signals)
+
+Prediction output includes:
+
+- completion likelihood score + classification (`Very High` → `Very Low`)
+- confidence score + confidence level
+- abandonment risk score + risk level (`Low Risk` / `Medium Risk` / `High Risk`)
+- recommendation modifiers (`completionLikelihoodBonus`, `abandonmentRiskPenalty`, `franchiseMomentumBonus`, `confidenceModifier`)
+- explanation-ready signals
+
+Analytics include:
+
+- prediction accuracy
+- highest and lowest completion genres
+- platform completion rates
+- franchise completion rates
+
+Endpoints:
+
+- `GET /completion-predictions?userId=:userId[&targetSessionMinutes=:minutes][&limit=:n]`
+- `GET /completion-predictions/:gameId?userId=:userId[&targetSessionMinutes=:minutes]`
+- `GET /completion-predictions/high-confidence?userId=:userId[&targetSessionMinutes=:minutes][&limit=:n]`
+- `GET /completion-predictions/high-risk?userId=:userId[&targetSessionMinutes=:minutes][&limit=:n]`
 
 ### Franchise Completion Tracking Engine
 
@@ -516,3 +547,4 @@ API endpoints:
 - `/queue` — active rotation / backlog queue placeholder
 - `/recommendations` — AI recommendation surface
 - `/settings` — household, persistence, and future integrations placeholder
+- `/completion-predictions` — completion likelihood and abandonment risk API surface
