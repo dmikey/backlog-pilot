@@ -22,6 +22,7 @@ import {
   RecommendationExplanationService,
   type RecommendationExplanationInput,
 } from "@/lib/recommendations/explanations";
+import { SessionIntelligenceService } from "@/lib/sessions/service";
 import type {
   PlayTonightAction,
   PlayTonightAnalyticsEvent,
@@ -41,6 +42,7 @@ export const playTonightSessionOptions: SessionOption[] = [
 
 const defaultSessionOption = playTonightSessionOptions[2];
 const decisionFatigueLimit = 4;
+const maxRecommendationReasons = 5;
 const defaultOwnedDays = 365;
 const sessionDurationBands = {
   "15-minutes": { maxHours: 35 },
@@ -81,6 +83,7 @@ export class PlayTonightService {
   private readonly franchiseSignalsService: FranchiseRecommendationSignals;
   private readonly explanationService = new RecommendationExplanationService();
   private readonly explanationResponseBuilder = new ExplanationResponseBuilder();
+  private readonly sessionService = new SessionIntelligenceService();
 
   constructor(
     private readonly libraryService: UserLibraryService,
@@ -220,12 +223,21 @@ export class PlayTonightService {
         const franchiseSignal = candidate.game.franchiseId
           ? franchiseSignals.get(candidate.game.franchiseId)
           : undefined;
+        const sessionInsight = this.sessionService.calculateForRecommendation({
+          gameId: candidate.game.id,
+          availableMinutes: input.sessionOption.targetSessionMinutes,
+          playtimeHours: entry.game.playtimeHours,
+        });
 
         const boostedScore = clamp(
           scored.score * (duplicateSignal?.penaltyMultiplier ?? 1) +
             (franchiseSignal?.nearFranchiseCompletionBonus ?? 0) * 8 +
             (franchiseSignal?.seriesContinuationBonus ?? 0) * 6 -
-            (franchiseSignal?.abandonedFranchisePenalty ?? 0) * 4,
+            (franchiseSignal?.abandonedFranchisePenalty ?? 0) * 4 +
+            sessionInsight.recommendationSignals.sessionFitBonus * 10 +
+            sessionInsight.recommendationSignals.quickWinBonus * 6 +
+            sessionInsight.recommendationSignals.longSessionBonus * 5 -
+            sessionInsight.recommendationSignals.sessionMismatchPenalty * 8,
           0,
           100,
         );
@@ -235,7 +247,9 @@ export class PlayTonightService {
           gameId: entry.canonicalGame.id,
           platform: entry.ownershipRecords[0]?.platform ?? "steam",
           score: roundToTwo(boostedScore),
-          reasons: scored.reasons,
+          reasons: [sessionInsight.explanation, ...scored.reasons]
+            .filter((reason) => Boolean(reason))
+            .slice(0, maxRecommendationReasons),
           factors: scored.factors,
           franchiseSignal,
           duplicatePenaltyMultiplier: duplicateSignal?.penaltyMultiplier ?? 1,

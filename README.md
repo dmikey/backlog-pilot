@@ -278,6 +278,37 @@ Current weighted factors:
 
 Factor weights are configuration-driven via `RecommendationScoringEngine` constructor options, and `lib/recommendations/scoring.test.ts` covers deterministic behavior, explainability, weight overrides, and supported platform scoring.
 
+### Session Length Intelligence Engine
+
+`lib/sessions` adds time-aware session intelligence that powers Play Tonight and recommendation ranking.
+
+- `SessionFitEngine` classifies games into session profiles and computes fit/satisfaction/progress opportunities for available play windows.
+- `SessionRecommendationSignals` converts fit output into ranking modifiers:
+  - `sessionFitBonus`
+  - `sessionMismatchPenalty`
+  - `quickWinBonus`
+  - `longSessionBonus`
+- `SessionIntelligenceService` orchestrates:
+  - session profile classification
+  - fit scoring
+  - completion velocity estimates (sessions/weeks/likely completion date)
+  - analytics (preferred lengths, average duration, platform session preference)
+
+Session categories:
+
+- Micro Session (15-30 min)
+- Short Session (30-60 min)
+- Standard Session (1-2 hrs)
+- Long Session (2-4 hrs)
+- Marathon Session (4+ hrs)
+
+Endpoints:
+
+- `GET /sessions/categories`
+- `GET /sessions/recommendations?userId=:userId[&availableMinutes=:minutes][&limit=:n]`
+- `GET /sessions/fit/:gameId?availableMinutes=:minutes[&playtimeHours=:hours]`
+- `POST /sessions/calculate`
+
 ### Play Tonight Experience
 
 `lib/play-tonight` provides the recommendation-first “What should I play tonight?” flow by composing existing services instead of duplicating scoring logic.
@@ -286,6 +317,7 @@ Factor weights are configuration-driven via `RecommendationScoringEngine` constr
   - `RecommendationScoringEngine` (base score + reasons)
   - `FranchiseRecommendationSignals` (continuation and completion momentum)
   - `DuplicateOwnershipService` (duplicate ownership penalties)
+  - `SessionIntelligenceService` (session fit modifiers and time-window alignment)
 - Session-aware filtering is exposed through built-in options:
   - 15 Minutes
   - 30 Minutes
@@ -325,6 +357,7 @@ Analytics tracked:
 - `RecommendationQueryService` (library/metadata/scoring/franchise + duplicate signals)
 - `RecommendationQueryService` also applies activity signals from Steam engagement (`recentlyPlayedBoost`, continuation bonus, dormant revival boost, abandonment risk).
 - `RecommendationQueryService` also applies achievement progression signals (`nearCompletionBonus`, `achievementMomentumBonus`, `masteryOpportunityBonus`, `abandonmentRiskScore`) so near-finished games can be surfaced at the right time.
+- `RecommendationQueryService` also layers session intelligence modifiers (`sessionFitBonus`, `sessionMismatchPenalty`, `quickWinBonus`, `longSessionBonus`) to better align recommendations with available play time.
 - `RecommendationResponseBuilder` (typed response contracts + explanation output)
 - `RecommendationExplanationService` + `ExplanationTemplateEngine` + `ExplanationResponseBuilder` (deterministic explanation generation and structured UI-safe payloads)
 
