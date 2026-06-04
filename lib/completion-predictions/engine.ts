@@ -6,10 +6,7 @@ import type { LibraryGameWithOwnership } from "@/lib/library/types";
 import type { SessionIntelligenceService } from "@/lib/sessions/service";
 
 import { AbandonmentRiskEngine } from "@/lib/completion-predictions/abandonment-risk-engine";
-import {
-  CompletionLikelihoodService,
-  type CompletionLikelihoodResult,
-} from "@/lib/completion-predictions/completion-likelihood-service";
+import { CompletionLikelihoodService } from "@/lib/completion-predictions/completion-likelihood-service";
 import type {
   CompletionPrediction,
   CompletionPredictionAnalytics,
@@ -357,4 +354,3 @@ function getSafeFranchiseName(franchiseId: string) {
 function roundToFour(value: number) {
   return Math.round(value * 10000) / 10000;
 }
-
