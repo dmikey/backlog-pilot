@@ -1,4 +1,5 @@
 import { getSessionIntelligenceService } from "@/lib/sessions/container";
+import { SessionValidationError } from "@/lib/sessions/service";
 
 import {
   parseAvailableMinutes,
@@ -17,10 +18,24 @@ export async function GET(
       getSessionIntelligenceService().calculateSessionFit({
         gameId,
         availableMinutes: parseAvailableMinutes(url),
-        playtimeHours: Number(url.searchParams.get("playtimeHours") ?? 0) || 0,
+        playtimeHours: parseOptionalPlaytimeHours(url.searchParams.get("playtimeHours")),
       }),
     );
   } catch (error) {
     return toErrorResponse(error);
   }
+}
+
+function parseOptionalPlaytimeHours(value: string | null) {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new SessionValidationError("playtimeHours must be a non-negative number.");
+  }
+
+  return parsed;
 }

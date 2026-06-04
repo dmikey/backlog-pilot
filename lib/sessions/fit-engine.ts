@@ -251,7 +251,7 @@ export class SessionFitEngine {
     availableCategory: SessionCategory;
     sessionFitScore: number;
   }) {
-    const fitLabel =
+    const fitDescriptor =
       input.sessionFitScore >= 0.85
         ? "excellent"
         : input.sessionFitScore >= 0.7
@@ -260,7 +260,7 @@ export class SessionFitEngine {
             ? "moderate"
             : "limited";
 
-    return `${fitLabel} fit for ${input.availableCategory.toLowerCase()} time windows; ideal profile is ${input.profile.primaryCategory.toLowerCase()}.`;
+    return `${fitDescriptor} fit for ${input.availableCategory.toLowerCase()} time windows; ideal profile is ${input.profile.primaryCategory.toLowerCase()}.`;
   }
 }
 

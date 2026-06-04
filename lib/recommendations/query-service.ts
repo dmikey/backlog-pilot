@@ -153,10 +153,12 @@ export class RecommendationQueryService {
           ? [activityReason, ...scored.reasons]
           : scored.reasons.slice();
 
-        if (achievementReason) {
-          reasons.unshift(achievementReason);
+        const additionalReasons = [achievementReason, sessionInsight.explanation].filter(
+          (reason): reason is string => Boolean(reason),
+        );
+        for (const reason of additionalReasons.reverse()) {
+          reasons.unshift(reason);
         }
-        reasons.unshift(sessionInsight.explanation);
 
         return {
           recommendationId: `recommendation-${entry.canonicalGame.id}-${platform}`,

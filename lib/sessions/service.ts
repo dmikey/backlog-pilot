@@ -107,7 +107,7 @@ export class SessionIntelligenceService {
           gameId: entry.canonicalGame.id,
           game: entry.canonicalGame.canonicalTitle,
           sessionFitScore: result.sessionFitScore,
-          recommendedSession: `${Math.round(result.profile.idealSessionMinutes / 60 * 10) / 10} Hour`,
+          recommendedSession: formatSessionDuration(result.profile.idealSessionMinutes),
           estimatedSessionsRemaining: result.completionVelocity.estimatedSessionsRequired,
           recommendationSignals: result.recommendationSignals,
           explanation: result.explanation,
@@ -207,4 +207,18 @@ export class SessionIntelligenceService {
 
 function roundToTwo(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+function formatSessionDuration(minutes: number) {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+  }
+
+  const hours = roundToTwo(minutes / 60);
+  return `${hours} hours`;
 }

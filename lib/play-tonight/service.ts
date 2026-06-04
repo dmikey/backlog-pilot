@@ -42,6 +42,7 @@ export const playTonightSessionOptions: SessionOption[] = [
 
 const defaultSessionOption = playTonightSessionOptions[2];
 const decisionFatigueLimit = 4;
+const maxRecommendationReasons = 5;
 const defaultOwnedDays = 365;
 const sessionDurationBands = {
   "15-minutes": { maxHours: 35 },
@@ -246,7 +247,9 @@ export class PlayTonightService {
           gameId: entry.canonicalGame.id,
           platform: entry.ownershipRecords[0]?.platform ?? "steam",
           score: roundToTwo(boostedScore),
-          reasons: [sessionInsight.explanation, ...scored.reasons].slice(0, 5),
+          reasons: [sessionInsight.explanation, ...scored.reasons]
+            .filter((reason) => Boolean(reason))
+            .slice(0, maxRecommendationReasons),
           factors: scored.factors,
           franchiseSignal,
           duplicatePenaltyMultiplier: duplicateSignal?.penaltyMultiplier ?? 1,
