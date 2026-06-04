@@ -119,7 +119,7 @@ const useCaseBoosts: Record<
     "backlog-age": 1,
     "genre-affinity": 0.9,
     "platform-preference": 1.15,
-    "duplicate-ownership": 1.7,
+    "duplicate-ownership": 4,
     "burnout-avoidance": 0.95,
   },
   "queue-optimizer": {

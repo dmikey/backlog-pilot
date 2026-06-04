@@ -60,8 +60,8 @@ test("RecommendationExplanationService generates deterministic top reasons", () 
     [
       "Estimated completion time is only 6 hours",
       "Excellent fit for a 1-hour session",
-      "Matches your preferred platform",
       "Close to completing the franchise",
+      "Matches your preferred platform",
     ],
   );
 });

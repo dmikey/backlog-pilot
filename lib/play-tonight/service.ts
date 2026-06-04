@@ -1,6 +1,7 @@
 import {
   demoLibraryEntries,
   getGameById,
+  getMetadataByGameId,
   getPlatformById,
 } from "@/lib/demo-data";
 import { DuplicateOwnershipService } from "@/lib/duplicates/duplicate-ownership-service";
