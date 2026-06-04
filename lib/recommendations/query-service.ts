@@ -1,6 +1,8 @@
 import { demoLibraryEntries, getGameById, getMetadataByGameId } from "@/lib/demo-data";
 import type { ImportSource } from "@/lib/domain/types";
 import { AchievementService } from "@/lib/achievements/service";
+import { getCompletionPredictionEngine } from "@/lib/completion-predictions/container";
+import type { CompletionPredictionEngine } from "@/lib/completion-predictions/engine";
 import { DuplicateOwnershipService } from "@/lib/duplicates/duplicate-ownership-service";
 import { FranchiseRecommendationSignals } from "@/lib/franchises/recommendation-signals";
 import { getSteamActivityService } from "@/lib/activity/container";
@@ -36,6 +38,7 @@ export class RecommendationQueryService {
     private readonly activityService: SteamActivityService = getSteamActivityService(),
     private readonly achievementService: AchievementService = new AchievementService(),
     private readonly sessionService: SessionIntelligenceService = new SessionIntelligenceService(),
+    private readonly completionPredictionEngine: CompletionPredictionEngine = getCompletionPredictionEngine(),
   ) {
     this.duplicateService = new DuplicateOwnershipService(libraryService);
     this.franchiseSignalsService = new FranchiseRecommendationSignals(libraryService);
@@ -93,6 +96,14 @@ export class RecommendationQueryService {
         .getRecommendationSignals(input.userId)
         .map((signal) => [signal.canonicalGameId, signal]),
     );
+    const completionPredictionSignals = new Map(
+      this.completionPredictionEngine
+        .getRecommendationSignals({
+          userId: input.userId,
+          targetSessionMinutes: input.targetSessionMinutes,
+        })
+        .map((signal) => [signal.canonicalGameId, signal]),
+    );
 
     return source
       .map((entry) => {
@@ -104,6 +115,7 @@ export class RecommendationQueryService {
           : undefined;
         const activitySignal = activitySignals.get(candidate.game.id);
         const achievementSignal = achievementSignals.get(candidate.game.id);
+        const completionPredictionSignal = completionPredictionSignals.get(candidate.game.id);
         const sessionInsight = this.sessionService.calculateForRecommendation({
           gameId: candidate.game.id,
           availableMinutes: input.targetSessionMinutes,
@@ -128,6 +140,10 @@ export class RecommendationQueryService {
             (achievementSignal?.achievementMomentumBonus ?? 0) * 7 +
             (achievementSignal?.masteryOpportunityBonus ?? 0) * 6 -
             (achievementSignal?.abandonmentRiskScore ?? 0) * 5 +
+            (completionPredictionSignal?.completionLikelihoodBonus ?? 0) * 14 +
+            (completionPredictionSignal?.franchiseMomentumBonus ?? 0) * 6 +
+            (completionPredictionSignal?.confidenceModifier ?? 0) * 4 -
+            (completionPredictionSignal?.abandonmentRiskPenalty ?? 0) * 10 +
             sessionInsight.recommendationSignals.sessionFitBonus * 10 +
             sessionInsight.recommendationSignals.quickWinBonus * 6 +
             sessionInsight.recommendationSignals.longSessionBonus * 5 -
@@ -152,8 +168,18 @@ export class RecommendationQueryService {
         const reasons = activityReason
           ? [activityReason, ...scored.reasons]
           : scored.reasons.slice();
+        const completionPredictionReason =
+          completionPredictionSignal
+            ? completionPredictionSignal.abandonmentRiskScore >= 0.66
+              ? "Completion prediction flags elevated abandonment risk for this title."
+              : `Completion prediction estimates ${Math.round(completionPredictionSignal.completionLikelihood * 100)}% finish likelihood.`
+            : undefined;
 
-        const additionalReasons = [achievementReason, sessionInsight.explanation].filter(
+        const additionalReasons = [
+          completionPredictionReason,
+          achievementReason,
+          sessionInsight.explanation,
+        ].filter(
           (reason): reason is string => Boolean(reason),
         );
         for (const reason of additionalReasons.reverse()) {
@@ -180,6 +206,7 @@ export class RecommendationQueryService {
             activeRotation,
             scoredFactors: scored.factors,
             franchiseSignal,
+            completionPredictionSignal,
           }),
         } satisfies RankedRecommendationCandidate;
       })
@@ -352,6 +379,11 @@ export class RecommendationQueryService {
     activeRotation: ScoringCandidate[];
     scoredFactors: RankedRecommendationCandidate["factors"];
     franchiseSignal?: ReturnType<FranchiseRecommendationSignals["listForUser"]>[number];
+    completionPredictionSignal?: {
+      completionLikelihood: number;
+      confidence: number;
+      abandonmentRiskScore: number;
+    };
   }): RecommendationExplanationInput {
     const ownedDays = this.toRecommendationContextEntry(input.entry).ownedDays;
     const overlappingGenreNames = input.entry.canonicalGame.genres
@@ -377,6 +409,13 @@ export class RecommendationQueryService {
       duplicateOwnershipCount: input.duplicateCount,
       duplicatePenaltyMultiplier: input.duplicatePenaltyMultiplier,
       isInActiveRotation: input.entry.game.status === "Active",
+      completionPrediction: input.completionPredictionSignal
+        ? {
+            likelihood: input.completionPredictionSignal.completionLikelihood,
+            confidence: input.completionPredictionSignal.confidence,
+            abandonmentRiskScore: input.completionPredictionSignal.abandonmentRiskScore,
+          }
+        : undefined,
       franchise: input.franchiseSignal
         ? {
             name: input.franchiseSignal.franchiseName,

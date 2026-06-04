@@ -78,7 +78,7 @@ export class RecommendationResponseBuilder {
       score: Math.round(candidate.score),
       confidence: candidate.confidence,
       estimatedCompletionHours: candidate.estimatedCompletionHours,
-      reasons: explanationResult.reasons.map((reason) => reason.message),
+      reasons: candidate.reasons,
       factorBreakdown: candidate.factors,
       explanation,
     };

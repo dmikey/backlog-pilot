@@ -44,6 +44,11 @@ export interface RecommendationExplanationInput {
   duplicateOwnershipCount: number;
   duplicatePenaltyMultiplier: number;
   isInActiveRotation: boolean;
+  completionPrediction?: {
+    likelihood: number;
+    confidence: number;
+    abandonmentRiskScore: number;
+  };
   franchise?: {
     name: string;
     nextRecommendedGameTitle?: string;
@@ -218,6 +223,22 @@ export class ExplanationTemplateEngine {
     signals: RecommendationExplanationInput,
     priority: number,
   ): RecommendationExplanationReason {
+    if (signals.completionPrediction && signals.completionPrediction.likelihood >= 0.7) {
+      return {
+        category: "completion",
+        templateId: "completion-prediction-high",
+        message: `Completion prediction is ${Math.round(signals.completionPrediction.likelihood * 100)}% likely`,
+        priority,
+        sentiment: "positive",
+        data: {
+          estimatedCompletionHours: signals.estimatedCompletionHours,
+          completionLikelihood: signals.completionLikelihood,
+          completionPredictionLikelihood: signals.completionPrediction.likelihood,
+          completionPredictionConfidence: signals.completionPrediction.confidence,
+        },
+      };
+    }
+
     if (signals.estimatedCompletionHours <= 8) {
       return {
         category: "completion",
@@ -573,6 +594,7 @@ function getSignalStrength(
     case "completion":
       return Math.max(
         signals.factorBreakdown.completionProbability,
+        signals.completionPrediction?.likelihood ?? 0,
         signals.estimatedCompletionHours <= 8
           ? 1
           : signals.estimatedCompletionHours <= 16
